@@ -15,29 +15,29 @@ interface WordScrambleGameProps {
 
 const WORDS: ScrambleWord[] = [
   {
-    word: "FOREVER",
-    hint: "How long I want to be with you",
-    message: "My love for you will last forever! 💖",
+    word: "TOUJOURS",
+    hint: "Combien de temps je veux être avec toi",
+    message: "Mon amour pour toi durera toujours ! 💖",
   },
   {
-    word: "SOULMATE",
-    hint: "What you are to me",
-    message: "You are my one true soulmate! 💫",
+    word: "AMOUREUX",
+    hint: "Ce que tu es pour moi",
+    message: "Tu es mon âme sœur ! 💫",
   },
   {
-    word: "BEAUTIFUL",
-    hint: "What you are, inside and out",
-    message: "Your beauty shines so bright! ✨",
+    word: "MAGNIFIQUE",
+    hint: "Ce que tu es, à l'intérieur comme à l'extérieur",
+    message: "Ta beauté brille si fort ! ✨",
   },
   {
-    word: "DESTINY",
-    hint: "What brought us together",
-    message: "We were meant to be together! 🌟",
+    word: "DESTIN",
+    hint: "Ce qui nous a réunis",
+    message: "Nous étions destinés à être ensemble ! 🌟",
   },
   {
-    word: "PRECIOUS",
-    hint: "What you mean to me",
-    message: "You are my precious treasure! 💎",
+    word: "PRECIEUX",
+    hint: "Ce que tu représentes pour moi",
+    message: "Tu es mon précieux trésor ! 💎",
   },
 ];
 
@@ -110,7 +110,7 @@ export default function WordScrambleGame({
           onClick={() => setShowHint(true)}
           className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors"
         >
-          Need a hint? 💭
+          Besoin d&apos;un indice ? 💭
         </button>
       </div>
 
@@ -123,7 +123,7 @@ export default function WordScrambleGame({
             exit={{ opacity: 0, y: -20 }}
             className="text-center mb-8 text-purple-600 font-medium"
           >
-            Hint: {currentPuzzle.hint}
+            Indice : {currentPuzzle.hint}
           </motion.div>
         )}
       </AnimatePresence>

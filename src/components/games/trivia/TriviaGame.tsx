@@ -3,83 +3,79 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface TriviaQuestion {
+interface Question {
   question: string;
   options: string[];
-  correctAnswer: number;
-  explanation: string;
+  correctIndex: number;
+  message: string;
 }
 
 interface TriviaGameProps {
   onComplete: () => void;
 }
 
-const QUESTIONS: TriviaQuestion[] = [
+const QUESTIONS: Question[] = [
   {
-    question: "Where did we have our first date?",
+    question: "Quelle est notre chanson préférée ?",
     options: [
-      "At a coffee shop",
-      "At the theater",
-      "In a restaurant",
-      "In the park",
+      "Perfect - Ed Sheeran",
+      "All of Me - John Legend",
+      "At Last - Etta James",
+      "Thinking Out Loud - Ed Sheeran",
     ],
-    correctAnswer: 1,
-    explanation: "We watched that amazing play together at the theater! 🎭",
+    correctIndex: 0,
+    message: "Perfect - Notre chanson parfaite ! 💃",
   },
   {
-    question: "What was the first gift I gave you?",
-    options: ["A book", "A necklace", "A flower", "A chocolate box"],
-    correctAnswer: 2,
-    explanation: "A beautiful flower that you kept for weeks! 🌺",
+    question: "Où était notre premier rendez-vous ?",
+    options: ["Au café", "Au théâtre", "Au restaurant", "Au parc"],
+    correctIndex: 1,
+    message: "Cette magnifique pièce qu'on a vue ensemble ! 🎭",
   },
   {
-    question: "What was playing during our first dance?",
+    question: "Quel a été mon premier cadeau pour toi ?",
+    options: ["Un livre", "Un collier", "Une fleur", "Une boîte de chocolats"],
+    correctIndex: 2,
+    message: "Une belle fleur que tu as gardée pendant des semaines ! 🌺",
+  },
+  {
+    question: "Où était notre premier baiser ?",
     options: [
-      "Perfect by Ed Sheeran",
-      "All of Me by John Legend",
-      "At Last by Etta James",
-      "Thinking Out Loud by Ed Sheeran",
+      "Sous les étoiles",
+      "Sous la pluie",
+      "Devant chez toi",
+      "À la plage",
     ],
-    correctAnswer: 0,
-    explanation: 'Ed Sheeran\'s "Perfect" - our perfect moment! 💃',
+    correctIndex: 0,
+    message: "Cette nuit magique sous les étoiles ! ✨",
   },
   {
-    question: "Where did we have our first kiss?",
-    options: [
-      "Under the stars",
-      "In the rain",
-      "At your doorstep",
-      "By the beach",
-    ],
-    correctAnswer: 0,
-    explanation: "That magical night under the starlit sky! ✨",
-  },
-  {
-    question: "What did we cook together on our first dinner date at home?",
-    options: ["Pizza", "Pasta", "Sushi", "Tacos"],
-    correctAnswer: 1,
-    explanation: "That delicious homemade pasta we made together! 🍝",
+    question: "Qu'avons-nous cuisiné ensemble la première fois ?",
+    options: ["Une pizza", "Des pâtes", "Des sushis", "Des tacos"],
+    correctIndex: 1,
+    message: "Ces délicieuses pâtes faites maison ! 🍝",
   },
 ];
 
-export function TriviaGame({ onComplete }: TriviaGameProps): React.JSX.Element {
+export default function TriviaGame({
+  onComplete,
+}: TriviaGameProps): React.JSX.Element {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
 
   const handleAnswer = (answerIndex: number) => {
-    if (selectedAnswer !== null) return; // Prevent multiple answers
+    if (selectedAnswer !== null) return;
 
     setSelectedAnswer(answerIndex);
-    const correct = answerIndex === QUESTIONS[currentQuestion].correctAnswer;
+    const correct = answerIndex === QUESTIONS[currentQuestion].correctIndex;
     setIsCorrect(correct);
 
     if (correct) {
       setScore(score + 1);
     }
 
-    // Move to next question after delay
     setTimeout(() => {
       if (currentQuestion < QUESTIONS.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
@@ -95,18 +91,16 @@ export function TriviaGame({ onComplete }: TriviaGameProps): React.JSX.Element {
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
-      {/* Progress bar */}
-      <div className="w-full h-2 bg-purple-100 rounded-full mb-8">
+      <div className="w-full h-2 bg-rose-100 rounded-full mb-8">
         <div
-          className="h-full bg-purple-500 rounded-full transition-all duration-500"
+          className="h-full bg-rose-500 rounded-full transition-all duration-500"
           style={{
             width: `${((currentQuestion + 1) / QUESTIONS.length) * 100}%`,
           }}
         />
       </div>
 
-      {/* Score */}
-      <div className="text-right mb-4 text-purple-600 font-medium">
+      <div className="text-right mb-4 text-rose-600 font-medium">
         Score: {score}/{QUESTIONS.length}
       </div>
 
@@ -118,12 +112,10 @@ export function TriviaGame({ onComplete }: TriviaGameProps): React.JSX.Element {
           exit={{ opacity: 0, x: -50 }}
           className="space-y-6"
         >
-          {/* Question */}
-          <h2 className="text-2xl font-bold text-purple-800 text-center">
+          <h2 className="text-2xl font-bold text-rose-800 text-center">
             {question.question}
           </h2>
 
-          {/* Options */}
           <div className="grid gap-4">
             {question.options.map((option, index) => (
               <motion.button
@@ -131,12 +123,12 @@ export function TriviaGame({ onComplete }: TriviaGameProps): React.JSX.Element {
                 className={`p-4 rounded-xl text-left text-lg font-medium shadow transition-all
                   ${
                     selectedAnswer === null
-                      ? "bg-white hover:bg-purple-50"
+                      ? "bg-white hover:bg-rose-50"
                       : selectedAnswer === index
                       ? isCorrect
                         ? "bg-green-100 border-2 border-green-500"
                         : "bg-red-100 border-2 border-red-500"
-                      : index === question.correctAnswer &&
+                      : index === question.correctIndex &&
                         selectedAnswer !== null
                       ? "bg-green-100 border-2 border-green-500"
                       : "bg-white opacity-50"
@@ -150,7 +142,6 @@ export function TriviaGame({ onComplete }: TriviaGameProps): React.JSX.Element {
             ))}
           </div>
 
-          {/* Explanation */}
           {selectedAnswer !== null && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -161,8 +152,8 @@ export function TriviaGame({ onComplete }: TriviaGameProps): React.JSX.Element {
                   : "bg-red-100 text-red-800"
               }`}
             >
-              {isCorrect ? "✨ Correct! " : "❌ Not quite. "}
-              {question.explanation}
+              {isCorrect ? "✨ Bravo ! " : "❌ Pas tout à fait. "}
+              {question.message}
             </motion.div>
           )}
         </motion.div>

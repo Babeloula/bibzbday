@@ -68,33 +68,37 @@ export default function KeyLocationPage(): React.JSX.Element {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl md:text-5xl font-bold text-purple-800 mb-6"
+              className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 mb-8"
             >
-              🎉 Congratulations! 🎉
+              🎉 Félicitations ! 🎉
             </motion.h1>
 
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="space-y-6 text-lg text-purple-700"
+              className="space-y-8 text-lg text-purple-700"
             >
-              <p className="text-2xl font-medium">
-                You&apos;ve solved the final riddle! 🌟
+              <p className="text-2xl font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text">
+                Tu as résolu l&apos;énigme finale ! 🌟
               </p>
 
-              <div className="p-6 bg-purple-50 rounded-xl">
+              <div className="p-8 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100 shadow-lg">
                 <p className="text-xl">
-                  The key to your special box is hidden...
+                  La clé de ta boîte spéciale est cachée...
                 </p>
-                <p className="text-2xl font-bold mt-4 text-purple-900">
-                  In the pocket of your favorite jacket! 🧥
+                <p className="text-2xl font-bold mt-4 bg-gradient-to-r from-purple-700 to-pink-700 text-transparent bg-clip-text">
+                  Dans la poche de ta veste préférée ! 🧥
                 </p>
               </div>
 
-              <p className="text-xl mt-6">
-                Happy Birthday! 🎂
-                <br />I hope this treasure hunt made your day special! 🎁
+              <p className="text-xl mt-8">
+                Joyeux Anniversaire ! 🎂
+                <br />
+                <span className="text-lg text-purple-600">
+                  J&apos;espère que cette chasse au trésor a rendu ta journée
+                  spéciale ! 🎁
+                </span>
               </p>
             </motion.div>
 
@@ -102,9 +106,9 @@ export default function KeyLocationPage(): React.JSX.Element {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.9 }}
-              className="text-purple-600 mt-8 italic"
+              className="text-2xl text-purple-600 mt-12 font-medium"
             >
-              With all my love ❤️
+              Avec tout mon amour ❤️
             </motion.div>
           </motion.div>
         )}

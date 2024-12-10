@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// Define a single memory item
 interface MemoryItem {
   content: string;
   memory: string;
 }
 
-// Define the card state
 interface CardState {
   memoryItem: MemoryItem;
   isFlipped: boolean;
@@ -22,15 +20,17 @@ interface MemoryGameProps {
 
 // Original memory items (just 6 items, we'll create pairs from these)
 const MEMORY_ITEMS: MemoryItem[] = [
-  { content: "🎭", memory: "Our first date at the theater" },
-  { content: "🌺", memory: "The flower you gave me" },
-  { content: "🎪", memory: "That fun carnival night" },
-  { content: "🌙", memory: "Stargazing on the beach" },
-  { content: "🎸", memory: "Your amazing concert" },
-  { content: "🎨", memory: "Our painting class together" },
+  { content: "🎭", memory: "Notre premier rendez-vous au théâtre" },
+  { content: "🌺", memory: "La fleur que tu m'as offerte" },
+  { content: "🎪", memory: "Cette soirée magique à la fête foraine" },
+  { content: "🌙", memory: "Notre soirée à regarder les étoiles sur la plage" },
+  { content: "🎸", memory: "Ton magnifique concert" },
+  { content: "🎨", memory: "Notre cours de peinture ensemble" },
 ];
 
-export function MemoryGame({ onComplete }: MemoryGameProps) {
+export default function MemoryGame({
+  onComplete,
+}: MemoryGameProps): React.JSX.Element {
   // State for all cards
   const [cards, setCards] = useState<CardState[]>([]);
   // Track currently flipped card indices

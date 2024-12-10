@@ -219,7 +219,7 @@ export default function SlidingPuzzle({
         )}
 
         <div className="absolute bottom-[-40px] left-0 right-0 text-center text-indigo-600">
-          Moves: {moves}
+          Mouvements : {moves}
         </div>
       </div>
 
@@ -228,10 +228,11 @@ export default function SlidingPuzzle({
           onClick={() => setShowHint(!showHint)}
           className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors"
         >
-          {showHint ? "Hide Hint" : "Show Hint"} 💡
+          {showHint ? "Cacher l&apos;indice" : "Montrer l&apos;indice"} 💡
         </button>
         <div className="text-indigo-600 text-sm">
-          Use arrow keys or click tiles to move them
+          Utilise les flèches du clavier ou clique sur les tuiles pour les
+          déplacer
         </div>
       </div>
     </div>

@@ -53,8 +53,8 @@ export default function FinalMessagePage(): React.JSX.Element {
     e.preventDefault();
     // Convert answer to lowercase and remove spaces for comparison
     const cleanAnswer = answer.toLowerCase().trim();
-    // Replace this with your actual answer
-    if (cleanAnswer === "together") {
+    // La réponse en français
+    if (cleanAnswer === "ensemble") {
       router.push("/final-message/key-location");
     } else {
       setIsError(true);
@@ -95,9 +95,9 @@ export default function FinalMessagePage(): React.JSX.Element {
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
-                className="text-4xl md:text-5xl font-bold text-purple-800 mb-6"
+                className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 mb-6"
               >
-                One Last Challenge! 🎯
+                Un Dernier Défi ! 🎯
               </motion.h1>
 
               <motion.div
@@ -107,21 +107,21 @@ export default function FinalMessagePage(): React.JSX.Element {
                 className="space-y-6 text-lg text-purple-700"
               >
                 <p className="text-xl font-medium">
-                  Solve this riddle to find the key to your special box:
+                  Résous cette énigme pour trouver la clé de ta boîte spéciale :
                 </p>
-                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg">
-                  <p className="italic text-xl text-purple-800">
-                    &ldquo;Two hearts that beat as one,
+                <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-purple-100">
+                  <p className="italic text-xl text-purple-800 leading-relaxed">
+                    &ldquo;Deux cœurs qui battent à l&apos;unisson,
                     <br />
-                    Through storms and sunny days we run.
+                    À travers orages et beaux jours nous courrons.
                     <br />
-                    Like puzzle pieces perfectly aligned,
+                    Comme des pièces de puzzle parfaitement alignées,
                     <br />
-                    This word describes what fate designed.
+                    Ce mot décrit ce que le destin a dessiné.
                     <br />
-                    Forever bound, in joy we stay,
+                    Pour toujours liés, dans la joie nous restons,
                     <br />
-                    Walking life&apos;s beautiful way.&rdquo;
+                    Sur le beau chemin de la vie nous marchons.&rdquo;
                   </p>
                 </div>
 
@@ -131,10 +131,11 @@ export default function FinalMessagePage(): React.JSX.Element {
                       type="text"
                       value={answer}
                       onChange={(e) => setAnswer(e.target.value)}
-                      placeholder="Enter your answer..."
-                      className={`w-64 px-4 py-2 text-lg rounded-lg border-2 
+                      placeholder="Entre ta réponse..."
+                      className={`w-72 px-6 py-3 text-lg rounded-xl border-2 
                         ${isError ? "border-red-300" : "border-purple-300"}
-                        focus:outline-none focus:border-purple-500 transition-colors`}
+                        focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 
+                        transition-all duration-200 bg-white/90 backdrop-blur-sm`}
                     />
                     <AnimatePresence>
                       {isError && (
@@ -142,17 +143,19 @@ export default function FinalMessagePage(): React.JSX.Element {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
-                          className="text-red-500"
+                          className="text-red-500 font-medium"
                         >
-                          That&apos;s not quite right. Try again! 💭
+                          Ce n&apos;est pas tout à fait ça. Essaie encore ! 💭
                         </motion.p>
                       )}
                     </AnimatePresence>
                     <button
                       type="submit"
-                      className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+                      className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-lg font-semibold 
+                        shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200
+                        hover:from-purple-600 hover:to-pink-600 active:scale-95"
                     >
-                      Check Answer 🔍
+                      Vérifier la Réponse 🔍
                     </button>
                   </div>
                 </form>
