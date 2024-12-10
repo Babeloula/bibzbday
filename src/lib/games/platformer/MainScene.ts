@@ -64,11 +64,18 @@ export class MainScene extends Scene {
     );
 
     // Add background
-    const bg = this.add.image(800, 450, "sky");
+    const bg = this.add.image(0, 0, "sky");
+    bg.setOrigin(0.5, 0.5);
+
+    // Calculate the scale needed to cover the game width and height
     const scaleX = this.cameras.main.width / bg.width;
     const scaleY = this.cameras.main.height / bg.height;
     const scale = Math.max(scaleX, scaleY);
-    bg.setScale(scale).setScrollFactor(0);
+    bg.setScale(scale);
+
+    // Center the background
+    bg.setPosition(this.cameras.main.width / 2, this.cameras.main.height / 2);
+    bg.setScrollFactor(0);
 
     // Create tilemap
     this.map = this.make.tilemap({ key: "map" });
@@ -97,19 +104,19 @@ export class MainScene extends Scene {
         playerX,
         playerY,
         "player",
-        "female_idle.png"
+        "character_femalePerson_idle.png"
       );
 
       // Set up player physics body
-      this.player.setBounce(0); // Remove bounce for more predictable jumps
+      this.player.setBounce(0);
       this.player.setCollideWorldBounds(true);
       this.player.setDragX(1000);
       this.player.setDepth(1);
 
       // Adjust physics body size and offset for better ground detection
       if (this.player.body) {
-        this.player.body.setSize(30, 90); // Narrower and shorter collision box
-        this.player.body.setOffset(25, 20); // Adjust offset to match visual
+        this.player.body.setSize(30, 90);
+        this.player.body.setOffset(33, 38);
       }
 
       // Enable debug visualization in development
@@ -161,14 +168,14 @@ export class MainScene extends Scene {
       type: "diamond" | "key";
       color: string;
     }> = [
-      { x: 400, y: 200, type: "diamond", color: "blue" },
-      { x: 800, y: 300, type: "key", color: "yellow" },
-      { x: 1200, y: 200, type: "diamond", color: "red" },
-      { x: 1600, y: 300, type: "key", color: "green" },
-      { x: 2000, y: 200, type: "diamond", color: "yellow" },
-      { x: 2400, y: 300, type: "key", color: "blue" },
-      { x: 2800, y: 200, type: "diamond", color: "green" },
-      { x: 3000, y: 300, type: "key", color: "red" },
+      { x: 200, y: 200, type: "diamond", color: "blue" },
+      { x: 400, y: 300, type: "key", color: "yellow" },
+      { x: 600, y: 200, type: "diamond", color: "red" },
+      { x: 800, y: 300, type: "key", color: "green" },
+      { x: 1000, y: 200, type: "diamond", color: "yellow" },
+      { x: 1200, y: 300, type: "key", color: "blue" },
+      { x: 1400, y: 200, type: "diamond", color: "green" },
+      { x: 1500, y: 300, type: "key", color: "red" },
     ];
 
     this.memoryItems = this.createMemoryItems(memoryPositions);
@@ -225,21 +232,27 @@ export class MainScene extends Scene {
   }
 
   private createPlayerAnimations() {
-    // Create walk animation
+    // Create walk animation with all 8 frames
     this.anims.create({
       key: "walk",
       frames: [
-        { key: "player", frame: "female_walk1.png" },
-        { key: "player", frame: "female_walk2.png" },
+        { key: "player", frame: "character_femalePerson_walk0.png" },
+        { key: "player", frame: "character_femalePerson_walk1.png" },
+        { key: "player", frame: "character_femalePerson_walk2.png" },
+        { key: "player", frame: "character_femalePerson_walk3.png" },
+        { key: "player", frame: "character_femalePerson_walk4.png" },
+        { key: "player", frame: "character_femalePerson_walk5.png" },
+        { key: "player", frame: "character_femalePerson_walk6.png" },
+        { key: "player", frame: "character_femalePerson_walk7.png" },
       ],
-      frameRate: 8,
+      frameRate: 12,
       repeat: -1,
     });
 
     // Create idle animation
     this.anims.create({
       key: "idle",
-      frames: [{ key: "player", frame: "female_idle.png" }],
+      frames: [{ key: "player", frame: "character_femalePerson_idle.png" }],
       frameRate: 1,
       repeat: 0,
     });
@@ -247,9 +260,28 @@ export class MainScene extends Scene {
     // Create jump animation
     this.anims.create({
       key: "jump",
-      frames: [{ key: "player", frame: "female_jump.png" }],
+      frames: [{ key: "player", frame: "character_femalePerson_jump.png" }],
       frameRate: 1,
       repeat: 0,
+    });
+
+    // Create fall animation
+    this.anims.create({
+      key: "fall",
+      frames: [{ key: "player", frame: "character_femalePerson_fall.png" }],
+      frameRate: 1,
+      repeat: 0,
+    });
+
+    // Create cheer animation
+    this.anims.create({
+      key: "cheer",
+      frames: [
+        { key: "player", frame: "character_femalePerson_cheer0.png" },
+        { key: "player", frame: "character_femalePerson_cheer1.png" },
+      ],
+      frameRate: 6,
+      repeat: -1,
     });
   }
 
@@ -259,6 +291,7 @@ export class MainScene extends Scene {
     const moveSpeed = 300;
     const isOnGround =
       this.player.body.blocked.down || this.player.body.touching.down;
+    const velocityY = this.player.body.velocity.y;
 
     // Reset jump states when landing
     if (isOnGround) {
@@ -286,7 +319,6 @@ export class MainScene extends Scene {
       this.isJumping &&
       this.jumpTimer < this.JUMP_HOLD_DURATION
     ) {
-      // Apply stronger additional upward force while jump is held
       this.jumpTimer += this.game.loop.delta;
       this.player.setVelocityY(this.JUMP_VELOCITY * 0.7);
     }
@@ -295,19 +327,18 @@ export class MainScene extends Scene {
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-moveSpeed);
       this.player.setFlipX(true);
-      if (isOnGround && !this.isJumping) {
+      if (isOnGround) {
         this.player.anims.play("walk", true);
       }
     } else if (this.cursors.right.isDown) {
       this.player.setVelocityX(moveSpeed);
       this.player.setFlipX(false);
-      if (isOnGround && !this.isJumping) {
+      if (isOnGround) {
         this.player.anims.play("walk", true);
       }
     } else {
-      // Apply drag when not moving
       this.player.setVelocityX(0);
-      if (isOnGround && !this.isJumping) {
+      if (isOnGround) {
         this.player.anims.play("idle", true);
       }
     }
@@ -320,20 +351,15 @@ export class MainScene extends Scene {
       } else if (this.cursors.right.isDown) {
         this.player.setVelocityX(moveSpeed * airControlFactor);
       }
-    }
 
-    // Update the movement animation logic
-    if (this.cursors.left.isDown || this.cursors.right.isDown) {
-      if (isOnGround && !this.isJumping) {
-        this.player.anims.play("walk", true);
+      // Handle jump and fall animations based on vertical velocity
+      if (velocityY < 0) {
+        // Moving upward - show jump animation
+        this.player.anims.play("jump", true);
+      } else if (velocityY > 200) {
+        // Moving downward fast - show fall animation
+        this.player.anims.play("fall", true);
       }
-    } else if (isOnGround && !this.isJumping) {
-      this.player.anims.play("idle", true);
-    }
-
-    // Keep the jump animation while in air
-    if (!isOnGround) {
-      this.player.anims.play("jump", true);
     }
   }
 
@@ -416,6 +442,9 @@ export class MainScene extends Scene {
     text.setOrigin(0.5);
     text.setScrollFactor(0);
     text.setDepth(100);
+
+    // Play cheer animation
+    this.player.anims.play("cheer", true);
 
     // Animate text and call completion callback
     this.tweens.add({
