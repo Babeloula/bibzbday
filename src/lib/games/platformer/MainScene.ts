@@ -14,6 +14,7 @@ export class MainScene extends Scene {
   private onGameComplete?: () => void;
   private guideText?: GameObjects.Text;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private canJump: boolean = true;
 
   constructor() {
     super({ key: "MainScene" });
@@ -29,10 +30,21 @@ export class MainScene extends Scene {
     this.load.image("sky", "/assets/games/platformer/sky.png");
     this.load.image("ground", "/assets/games/platformer/platform.png");
     this.load.image("star", "/assets/games/platformer/star.png");
-    this.load.spritesheet("dude", "/assets/games/platformer/dude.png", {
-      frameWidth: 32,
-      frameHeight: 48,
-    });
+
+    // Create a simple character sprite
+    const graphics = this.add.graphics();
+
+    // Body (purple rectangle)
+    graphics.fillStyle(0x9c27b0, 1);
+    graphics.fillRect(8, 0, 16, 32);
+
+    // Head (circle)
+    graphics.fillStyle(0xba68c8, 1);
+    graphics.fillCircle(16, 8, 8);
+
+    // Generate texture from graphics
+    graphics.generateTexture("player", 32, 48);
+    graphics.destroy();
   }
 
   create() {
@@ -40,7 +52,7 @@ export class MainScene extends Scene {
     this.cursors = this.input.keyboard!.createCursorKeys();
 
     // Add background
-    const bg = this.add.image(640, 360, "sky");
+    const bg = this.add.image(800, 450, "sky");
     const scaleX = this.cameras.main.width / bg.width;
     const scaleY = this.cameras.main.height / bg.height;
     const scale = Math.max(scaleX, scaleY);
@@ -49,56 +61,52 @@ export class MainScene extends Scene {
     // Create platforms
     this.platforms = this.physics.add.staticGroup();
 
-    // Main ground platform
+    // Main ground platforms
     const groundY = this.cameras.main.height - 100;
-    this.platforms
-      .create(640, groundY, "ground")
-      .setScale(6, 0.5)
-      .refreshBody();
 
     // Floating platforms - positioned for better gameplay
-    this.platforms
-      .create(1000, groundY - 250, "ground")
-      .setScale(3, 0.5)
-      .refreshBody();
-    this.platforms
-      .create(300, groundY - 350, "ground")
-      .setScale(3, 0.5)
-      .refreshBody();
-    this.platforms
-      .create(800, groundY - 450, "ground")
-      .setScale(3, 0.5)
-      .refreshBody();
+    const platformPositions = [
+      // Sol principal en 3 parties
+      { x: 400, y: groundY, scale: 1 },
+      { x: 800, y: groundY, scale: 1 },
+      { x: 1200, y: groundY, scale: 1 },
+      // Plateformes flottantes
+      { x: 300, y: groundY - 200, scale: 0.5 },
+      { x: 700, y: groundY - 300, scale: 0.5 },
+      { x: 1100, y: groundY - 200, scale: 0.5 },
+      { x: 500, y: groundY - 400, scale: 0.5 },
+      { x: 900, y: groundY - 500, scale: 0.5 },
+    ];
 
-    // Create player with appropriate size
-    this.player = this.physics.add.sprite(100, groundY - 200, "dude");
-    this.player.setScale(4);
-    this.player.setBounce(0.1);
-    this.player.setCollideWorldBounds(true);
-
-    // Player animations
-    this.anims.create({
-      key: "left",
-      frames: this.anims.generateFrameNumbers("dude", { start: 0, end: 3 }),
-      frameRate: 10,
-      repeat: -1,
+    platformPositions.forEach(({ x, y, scale }) => {
+      this.platforms.create(x, y, "ground").setScale(scale, 0.2).refreshBody();
     });
 
-    this.anims.create({
-      key: "turn",
-      frames: [{ key: "dude", frame: 4 }],
-      frameRate: 20,
-    });
+    // Create player
+    try {
+      this.player = this.physics.add.sprite(200, groundY - 200, "player");
 
-    this.anims.create({
-      key: "right",
-      frames: this.anims.generateFrameNumbers("dude", { start: 5, end: 8 }),
-      frameRate: 10,
-      repeat: -1,
-    });
+      // Common player settings
+      this.player.setScale(2);
+      this.player.setBounce(0.1);
+      this.player.setCollideWorldBounds(true);
+      this.player.setDragX(1000);
+      this.player.setDepth(1);
+
+      // Debug visualization
+      const bounds = this.player.getBounds();
+      const graphics = this.add.graphics();
+      graphics.lineStyle(2, 0xff0000);
+      graphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      graphics.setDepth(2);
+    } catch (error) {
+      console.error("Error creating player:", error);
+    }
 
     // Add collision between player and platforms
-    this.physics.add.collider(this.player, this.platforms);
+    this.physics.add.collider(this.player, this.platforms, () => {
+      this.canJump = true;
+    });
 
     // Create memory items
     this.memoryItems = this.createMemoryItems(groundY);
@@ -116,63 +124,17 @@ export class MainScene extends Scene {
     });
 
     // Add guide text
-    this.showGuide();
-
-    // Set up camera to follow player
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-    this.cameras.main.setDeadzone(100, 100);
-  }
-
-  update() {
-    // Movement speed
-    const moveSpeed = 350;
-
-    if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-moveSpeed);
-      this.player.anims.play("left", true);
-    } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(moveSpeed);
-      this.player.anims.play("right", true);
-    } else {
-      this.player.setVelocityX(0);
-      this.player.anims.play("turn");
-    }
-
-    // Higher jump with better control
-    if (this.cursors.up.isDown && this.player.body?.touching.down) {
-      this.player.setVelocityY(-650);
-    }
-  }
-
-  private createMemoryItems(groundY: number): MemoryItem[] {
-    const memories = [
-      { x: 200, y: groundY - 500, text: "Our first kiss 💋" },
-      { x: 1000, y: groundY - 400, text: "That amazing vacation 🏖️" },
-      { x: 300, y: groundY - 600, text: "Dancing in the rain ☔" },
-      { x: 800, y: groundY - 600, text: "Cooking together 🍳" },
-      { x: 600, y: groundY - 300, text: "Movie marathon night 🎬" },
-    ];
-
-    return memories.map((memory) => {
-      const sprite = this.physics.add.sprite(memory.x, memory.y, "star");
-      sprite.setScale(3);
-      sprite.setBounceY(0.3);
-      return { sprite, memory: memory.text };
-    });
-  }
-
-  private showGuide() {
     const guideText = [
-      "🎮 How to Play:",
-      "→ Use arrow keys to move",
-      "↑ Press UP to jump",
-      "⭐ Collect all memory stars",
+      "🎮 Comment Jouer :",
+      "→ Utilise les flèches GAUCHE/DROITE pour te déplacer",
+      "↑ ou ESPACE pour sauter",
+      "⭐ Collecte toutes les étoiles de souvenirs",
       "",
-      "Press any key to start!",
+      "Appuie sur une touche pour commencer !",
     ].join("\n");
 
-    this.guideText = this.add.text(640, 360, guideText, {
-      fontSize: "36px",
+    this.guideText = this.add.text(800, 450, guideText, {
+      fontSize: "32px",
       color: "#fff",
       backgroundColor: "#000",
       padding: { x: 20, y: 20 },
@@ -186,6 +148,79 @@ export class MainScene extends Scene {
     this.input.keyboard?.once("keydown", () => {
       this.guideText?.destroy();
     });
+
+    // Set up camera to follow player
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    this.cameras.main.setDeadzone(100, 100);
+  }
+
+  update() {
+    if (!this.player?.body) return;
+
+    const moveSpeed = 300;
+
+    // Handle movement
+    if (this.cursors.left.isDown) {
+      this.player.setVelocityX(-moveSpeed);
+      this.player.setFlipX(true); // Face left
+    } else if (this.cursors.right.isDown) {
+      this.player.setVelocityX(moveSpeed);
+      this.player.setFlipX(false); // Face right
+    } else {
+      this.player.setVelocityX(0);
+    }
+
+    // Jump with better control
+    const spaceKey = this.input.keyboard?.addKey("SPACE");
+    const canJumpNow = this.canJump && this.player.body.touching.down;
+
+    if ((this.cursors.up.isDown || spaceKey?.isDown) && canJumpNow) {
+      this.player.setVelocityY(-550);
+      this.canJump = false;
+
+      // Add a small horizontal boost when jumping while moving
+      if (this.cursors.left.isDown) {
+        this.player.setVelocityX(-moveSpeed * 1.2);
+      } else if (this.cursors.right.isDown) {
+        this.player.setVelocityX(moveSpeed * 1.2);
+      }
+    }
+
+    // Reset jump ability when touching ground
+    if (this.player.body.touching.down) {
+      this.canJump = true;
+    }
+
+    // Add air control (reduced movement speed while in air)
+    if (!this.player.body.touching.down) {
+      if (this.cursors.left.isDown) {
+        this.player.setVelocityX(
+          Math.max(-moveSpeed * 0.8, this.player.body.velocity.x - 10)
+        );
+      } else if (this.cursors.right.isDown) {
+        this.player.setVelocityX(
+          Math.min(moveSpeed * 0.8, this.player.body.velocity.x + 10)
+        );
+      }
+    }
+  }
+
+  private createMemoryItems(groundY: number): MemoryItem[] {
+    const memories = [
+      { x: 300, y: groundY - 300, text: "Notre premier baiser 💋" },
+      { x: 1100, y: groundY - 300, text: "Ces belles vacances 🏖️" },
+      { x: 700, y: groundY - 400, text: "La danse sous la pluie ☔" },
+      { x: 500, y: groundY - 500, text: "La cuisine ensemble 🍳" },
+      { x: 900, y: groundY - 600, text: "Notre soirée cinéma 🎬" },
+    ];
+
+    return memories.map((memory) => {
+      const sprite = this.physics.add.sprite(memory.x, memory.y, "star");
+      sprite.setScale(1);
+      sprite.setBounceY(0.3);
+      sprite.setDepth(1); // Assure que les étoiles sont au-dessus des plateformes
+      return { sprite, memory: memory.text };
+    });
   }
 
   private collectMemory(item: MemoryItem) {
@@ -193,8 +228,8 @@ export class MainScene extends Scene {
     this.collectedCount++;
 
     // Show memory text
-    const text = this.add.text(640, 360, item.memory, {
-      fontSize: "48px",
+    const text = this.add.text(800, 450, item.memory, {
+      fontSize: "40px",
       color: "#fff",
       backgroundColor: "#000",
       padding: { x: 20, y: 10 },
@@ -220,12 +255,17 @@ export class MainScene extends Scene {
 
   private gameComplete() {
     // Show completion message
-    const text = this.add.text(640, 360, "All memories collected! 🎉", {
-      fontSize: "48px",
-      color: "#fff",
-      backgroundColor: "#000",
-      padding: { x: 20, y: 10 },
-    });
+    const text = this.add.text(
+      800,
+      450,
+      "Tous les souvenirs sont collectés ! 🎉",
+      {
+        fontSize: "40px",
+        color: "#fff",
+        backgroundColor: "#000",
+        padding: { x: 20, y: 10 },
+      }
+    );
     text.setOrigin(0.5);
     text.setScrollFactor(0);
     text.setDepth(100);
