@@ -3,18 +3,29 @@ import { Scene, GameObjects, Physics } from "phaser";
 interface MemoryItem {
   sprite: GameObjects.Sprite;
   memory: string;
+  type: "diamond" | "key";
+  color: string;
 }
 
 export class MainScene extends Scene {
   private player!: Physics.Arcade.Sprite;
-  private platforms!: Physics.Arcade.StaticGroup;
   private memoryItems!: MemoryItem[];
   private collectedCount: number = 0;
-  private totalMemories: number = 5;
+  private totalMemories: number = 8;
   private onGameComplete?: () => void;
   private guideText?: GameObjects.Text;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private spaceKey!: Phaser.Input.Keyboard.Key;
   private canJump: boolean = true;
+  private isJumping: boolean = false;
+  private jumpCooldown: number = 0;
+  private map!: Phaser.Tilemaps.Tilemap;
+  private tileset!: Phaser.Tilemaps.Tileset;
+  private groundLayer!: Phaser.Tilemaps.TilemapLayer;
+  private readonly GRAVITY = 800; // Reduced gravity for floatier jumps
+  private readonly JUMP_VELOCITY = -1000; // Much stronger jump force
+  private readonly JUMP_HOLD_DURATION = 200; // Longer hold duration for higher jumps
+  private jumpTimer: number = 0;
 
   constructor() {
     super({ key: "MainScene" });
@@ -28,28 +39,29 @@ export class MainScene extends Scene {
   preload() {
     // Load assets
     this.load.image("sky", "/assets/games/platformer/sky.png");
-    this.load.image("ground", "/assets/games/platformer/platform.png");
-    this.load.image("star", "/assets/games/platformer/star.png");
-
-    // Create a simple character sprite
-    const graphics = this.add.graphics();
-
-    // Body (purple rectangle)
-    graphics.fillStyle(0x9c27b0, 1);
-    graphics.fillRect(8, 0, 16, 32);
-
-    // Head (circle)
-    graphics.fillStyle(0xba68c8, 1);
-    graphics.fillCircle(16, 8, 8);
-
-    // Generate texture from graphics
-    graphics.generateTexture("player", 32, 48);
-    graphics.destroy();
+    this.load.image("tiles", "/assets/games/platformer/world.png");
+    this.load.tilemapTiledJSON("map", "/assets/games/platformer/game.json");
+    this.load.atlas(
+      "player",
+      "/assets/games/platformer/player.png",
+      "/assets/games/platformer/player.json"
+    );
+    this.load.atlas(
+      "items",
+      "/assets/games/platformer/items.png",
+      "/assets/games/platformer/items.json"
+    );
   }
 
   create() {
-    // Initialize cursor keys
+    // Get onComplete callback from scene data
+    this.onGameComplete = this.data.get("onComplete");
+
+    // Initialize cursor keys and space key
     this.cursors = this.input.keyboard!.createCursorKeys();
+    this.spaceKey = this.input.keyboard!.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SPACE
+    );
 
     // Add background
     const bg = this.add.image(800, 450, "sky");
@@ -58,62 +70,104 @@ export class MainScene extends Scene {
     const scale = Math.max(scaleX, scaleY);
     bg.setScale(scale).setScrollFactor(0);
 
-    // Create platforms
-    this.platforms = this.physics.add.staticGroup();
+    // Create tilemap
+    this.map = this.make.tilemap({ key: "map" });
+    this.tileset = this.map.addTilesetImage("world", "tiles")!;
 
-    // Main ground platforms
-    const groundY = this.cameras.main.height - 100;
+    // Create ground layer
+    this.groundLayer = this.map.createLayer(
+      "Calque de Tuiles 1",
+      this.tileset,
+      0,
+      0
+    )!;
 
-    // Floating platforms - positioned for better gameplay
-    const platformPositions = [
-      // Sol principal en 3 parties
-      { x: 400, y: groundY, scale: 1 },
-      { x: 800, y: groundY, scale: 1 },
-      { x: 1200, y: groundY, scale: 1 },
-      // Plateformes flottantes
-      { x: 300, y: groundY - 200, scale: 0.5 },
-      { x: 700, y: groundY - 300, scale: 0.5 },
-      { x: 1100, y: groundY - 200, scale: 0.5 },
-      { x: 500, y: groundY - 400, scale: 0.5 },
-      { x: 900, y: groundY - 500, scale: 0.5 },
-    ];
+    // Set up tilemap collisions
+    this.setupTilemapCollisions();
 
-    platformPositions.forEach(({ x, y, scale }) => {
-      this.platforms.create(x, y, "ground").setScale(scale, 0.2).refreshBody();
-    });
+    // Create player at a fixed position
+    const playerX = 200;
+    const playerY = 300;
 
-    // Create player
+    // Configure physics world with custom gravity
+    this.physics.world.gravity.y = this.GRAVITY;
+
     try {
-      this.player = this.physics.add.sprite(200, groundY - 200, "player");
+      this.player = this.physics.add.sprite(
+        playerX,
+        playerY,
+        "player",
+        "female_idle.png"
+      );
 
-      // Common player settings
-      this.player.setScale(2);
-      this.player.setBounce(0.1);
+      // Set up player physics body
+      this.player.setBounce(0); // Remove bounce for more predictable jumps
       this.player.setCollideWorldBounds(true);
       this.player.setDragX(1000);
       this.player.setDepth(1);
 
-      // Debug visualization
-      const bounds = this.player.getBounds();
-      const graphics = this.add.graphics();
-      graphics.lineStyle(2, 0xff0000);
-      graphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      graphics.setDepth(2);
+      // Adjust physics body size and offset for better ground detection
+      if (this.player.body) {
+        this.player.body.setSize(30, 90); // Narrower and shorter collision box
+        this.player.body.setOffset(25, 20); // Adjust offset to match visual
+      }
+
+      // Enable debug visualization in development
+      if (process.env.NODE_ENV === "development") {
+        this.physics.world.createDebugGraphic();
+        this.add
+          .grid(0, 0, this.map.widthInPixels, this.map.heightInPixels, 64, 64)
+          .setOrigin(0)
+          .setAlpha(0.3);
+      }
+
+      // Add collision between player and tilemap layer with debug callback
+      this.physics.add.collider(this.player, this.groundLayer, (obj1, obj2) => {
+        const player = obj1 as Physics.Arcade.Sprite;
+        if (player.body) {
+          const touchingDown = player.body.touching.down;
+          console.log("Collision detected - touching down:", touchingDown);
+        }
+      });
+
+      // Create player animations
+      this.createPlayerAnimations();
+
+      // Common player settings
+      this.player.setBounce(0.1);
+      this.player.setCollideWorldBounds(true);
+      this.player.setDragX(1000);
+      this.player.setDepth(1);
+      this.player.setSize(40, 100); // Adjust collision box size
+
+      // Add collision between player and tilemap layer
+      this.physics.add.collider(this.player, this.groundLayer);
     } catch (error) {
       console.error("Error creating player:", error);
     }
 
-    // Add collision between player and platforms
-    this.physics.add.collider(this.player, this.platforms, () => {
-      this.canJump = true;
-    });
+    // Create memory items at fixed positions
+    const memoryPositions: Array<{
+      x: number;
+      y: number;
+      type: "diamond" | "key";
+      color: string;
+    }> = [
+      { x: 400, y: 200, type: "diamond", color: "blue" },
+      { x: 800, y: 300, type: "key", color: "yellow" },
+      { x: 1200, y: 200, type: "diamond", color: "red" },
+      { x: 1600, y: 300, type: "key", color: "green" },
+      { x: 2000, y: 200, type: "diamond", color: "yellow" },
+      { x: 2400, y: 300, type: "key", color: "blue" },
+      { x: 2800, y: 200, type: "diamond", color: "green" },
+      { x: 3000, y: 300, type: "key", color: "red" },
+    ];
 
-    // Create memory items
-    this.memoryItems = this.createMemoryItems(groundY);
+    this.memoryItems = this.createMemoryItems(memoryPositions);
 
-    // Add collision between memory items and platforms
+    // Add collision between memory items and ground layer
     this.memoryItems.forEach((item) => {
-      this.physics.add.collider(item.sprite, this.platforms);
+      this.physics.add.collider(item.sprite, this.groundLayer);
       this.physics.add.overlap(
         this.player,
         item.sprite,
@@ -126,9 +180,9 @@ export class MainScene extends Scene {
     // Add guide text
     const guideText = [
       "🎮 Comment Jouer :",
-      "→ Utilise les flèches GAUCHE/DROITE pour te déplacer",
+      "Utilise les flèches GAUCHE/DROITE pour te déplacer",
       "↑ ou ESPACE pour sauter",
-      "⭐ Collecte toutes les étoiles de souvenirs",
+      "💎 Collecte les diamants et les clés magiques",
       "",
       "Appuie sur une touche pour commencer !",
     ].join("\n");
@@ -152,74 +206,152 @@ export class MainScene extends Scene {
     // Set up camera to follow player
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setDeadzone(100, 100);
+
+    // Set world bounds based on map size
+    this.physics.world.setBounds(
+      0,
+      0,
+      this.map.widthInPixels,
+      this.map.heightInPixels
+    );
+  }
+
+  private createPlayerAnimations() {
+    // Create walk animation
+    this.anims.create({
+      key: "walk",
+      frames: [
+        { key: "player", frame: "female_walk1.png" },
+        { key: "player", frame: "female_walk2.png" },
+      ],
+      frameRate: 8,
+      repeat: -1,
+    });
+
+    // Create idle animation
+    this.anims.create({
+      key: "idle",
+      frames: [{ key: "player", frame: "female_idle.png" }],
+      frameRate: 1,
+      repeat: 0,
+    });
+
+    // Create jump animation
+    this.anims.create({
+      key: "jump",
+      frames: [{ key: "player", frame: "female_jump.png" }],
+      frameRate: 1,
+      repeat: 0,
+    });
   }
 
   update() {
     if (!this.player?.body) return;
 
     const moveSpeed = 300;
+    const isOnGround =
+      this.player.body.blocked.down || this.player.body.touching.down;
+
+    // Reset jump timer when landing
+    if (isOnGround) {
+      this.jumpTimer = 0;
+    }
+
+    // Handle jumping with variable height
+    const jumpButtonPressed =
+      Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
+      Phaser.Input.Keyboard.JustDown(this.spaceKey);
+    const jumpButtonHeld = this.cursors.up.isDown || this.spaceKey.isDown;
+
+    if (
+      jumpButtonPressed &&
+      isOnGround &&
+      this.canJump &&
+      this.jumpCooldown <= 0
+    ) {
+      this.player.setVelocityY(this.JUMP_VELOCITY);
+      this.player.anims.play("jump", true);
+      this.isJumping = true;
+      this.canJump = false;
+      this.jumpCooldown = 8; // Reduced cooldown for more responsive jumps
+      this.jumpTimer = 0;
+    } else if (
+      jumpButtonHeld &&
+      this.isJumping &&
+      this.jumpTimer < this.JUMP_HOLD_DURATION
+    ) {
+      // Apply stronger additional upward force while jump is held
+      this.jumpTimer += this.game.loop.delta;
+      this.player.setVelocityY(this.JUMP_VELOCITY * 0.7); // Increased multiplier for higher jumps
+    }
 
     // Handle movement
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-moveSpeed);
-      this.player.setFlipX(true); // Face left
+      this.player.setFlipX(true);
+      if (isOnGround && !this.isJumping) {
+        this.player.anims.play("walk", true);
+      }
     } else if (this.cursors.right.isDown) {
       this.player.setVelocityX(moveSpeed);
-      this.player.setFlipX(false); // Face right
+      this.player.setFlipX(false);
+      if (isOnGround && !this.isJumping) {
+        this.player.anims.play("walk", true);
+      }
     } else {
+      // Apply drag when not moving
       this.player.setVelocityX(0);
-    }
-
-    // Jump with better control
-    const spaceKey = this.input.keyboard?.addKey("SPACE");
-    const canJumpNow = this.canJump && this.player.body.touching.down;
-
-    if ((this.cursors.up.isDown || spaceKey?.isDown) && canJumpNow) {
-      this.player.setVelocityY(-550);
-      this.canJump = false;
-
-      // Add a small horizontal boost when jumping while moving
-      if (this.cursors.left.isDown) {
-        this.player.setVelocityX(-moveSpeed * 1.2);
-      } else if (this.cursors.right.isDown) {
-        this.player.setVelocityX(moveSpeed * 1.2);
+      if (isOnGround && !this.isJumping) {
+        this.player.anims.play("idle", true);
       }
     }
 
-    // Reset jump ability when touching ground
-    if (this.player.body.touching.down) {
-      this.canJump = true;
-    }
-
     // Add air control (reduced movement speed while in air)
-    if (!this.player.body.touching.down) {
+    if (!isOnGround) {
+      const airControlFactor = 0.6;
       if (this.cursors.left.isDown) {
-        this.player.setVelocityX(
-          Math.max(-moveSpeed * 0.8, this.player.body.velocity.x - 10)
-        );
+        this.player.setVelocityX(-moveSpeed * airControlFactor);
       } else if (this.cursors.right.isDown) {
-        this.player.setVelocityX(
-          Math.min(moveSpeed * 0.8, this.player.body.velocity.x + 10)
-        );
+        this.player.setVelocityX(moveSpeed * airControlFactor);
       }
     }
   }
 
-  private createMemoryItems(groundY: number): MemoryItem[] {
+  private createMemoryItems(
+    positions: {
+      x: number;
+      y: number;
+      type: "diamond" | "key";
+      color: string;
+    }[]
+  ): MemoryItem[] {
     const memories = [
-      { x: 300, y: groundY - 300, text: "Notre premier baiser 💋" },
-      { x: 1100, y: groundY - 300, text: "Ces belles vacances 🏖️" },
-      { x: 700, y: groundY - 400, text: "La danse sous la pluie ☔" },
-      { x: 500, y: groundY - 500, text: "La cuisine ensemble 🍳" },
-      { x: 900, y: groundY - 600, text: "Notre soirée cinéma 🎬" },
+      "Un diamant bleu magique ! 💙",
+      "Une clé mystérieuse jaune ! 🗝️",
+      "Un diamant rouge étincelant ! ❤️",
+      "Une clé verte secrète ! 🔑",
+      "Un diamant jaune brillant ! 💛",
+      "Une clé bleue enchantée ! 🗝️",
+      "Un diamant vert précieux ! 💚",
+      "Une clé rouge puissante ! 💪",
     ];
 
-    return memories.map((memory) => {
-      const sprite = this.physics.add.sprite(memory.x, memory.y, "star");
+    return positions.map((pos, index) => {
+      const sprite = this.physics.add.sprite(
+        pos.x,
+        pos.y,
+        "items",
+        `${pos.color}_${pos.type}.png`
+      );
       sprite.setScale(1);
       sprite.setBounceY(0.3);
-      sprite.setDepth(1); // Assure que les étoiles sont au-dessus des plateformes
-      return { sprite, memory: memory.text };
+      sprite.setDepth(1);
+      return {
+        sprite,
+        memory: memories[index],
+        type: pos.type,
+        color: pos.color,
+      };
     });
   }
 
@@ -255,17 +387,12 @@ export class MainScene extends Scene {
 
   private gameComplete() {
     // Show completion message
-    const text = this.add.text(
-      800,
-      450,
-      "Tous les souvenirs sont collectés ! 🎉",
-      {
-        fontSize: "40px",
-        color: "#fff",
-        backgroundColor: "#000",
-        padding: { x: 20, y: 10 },
-      }
-    );
+    const text = this.add.text(800, 450, "Tous les trésors sont collectés !", {
+      fontSize: "40px",
+      color: "#fff",
+      backgroundColor: "#000",
+      padding: { x: 20, y: 10 },
+    });
     text.setOrigin(0.5);
     text.setScrollFactor(0);
     text.setDepth(100);
@@ -282,5 +409,35 @@ export class MainScene extends Scene {
         if (this.onGameComplete) this.onGameComplete();
       },
     });
+  }
+
+  private setupTilemapCollisions() {
+    // Set collisions for specific tile indexes
+    this.groundLayer.setCollisionBetween(1, 94);
+
+    // Enable collision debugging in development
+    if (process.env.NODE_ENV === "development") {
+      const debugGraphics = this.add.graphics().setAlpha(0.75);
+      this.groundLayer.renderDebug(debugGraphics, {
+        tileColor: null, // Color of non-colliding tiles
+        collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
+        faceColor: new Phaser.Display.Color(40, 39, 37, 255), // Color of colliding face edges
+      });
+    }
+
+    // Verify collision tiles
+    const collidingTiles = this.groundLayer.filterTiles(
+      (tile: Phaser.Tilemaps.Tile) => tile.collides
+    ).length;
+    console.log("Number of colliding tiles:", collidingTiles);
+
+    // Set world bounds based on map size
+    this.physics.world.setBounds(
+      0,
+      0,
+      this.map.widthInPixels,
+      this.map.heightInPixels
+    );
+    this.physics.world.setBoundsCollision(true, true, true, true);
   }
 }

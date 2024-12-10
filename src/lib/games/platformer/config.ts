@@ -8,14 +8,14 @@ export const gameConfig: Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 1600,
-    height: 900,
+    width: 3200,
+    height: 960,
   },
   physics: {
     default: "arcade",
     arcade: {
-      gravity: { y: 800, x: 0 },
-      debug: false,
+      gravity: { y: 1500, x: 0 },
+      debug: true,
     },
   },
   scene: MainScene,

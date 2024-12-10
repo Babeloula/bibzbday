@@ -1,0 +1,121 @@
+{
+  "frames": [
+    {
+      "filename": "female_cheer1.png",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 110
+      }
+    },
+    {
+      "filename": "female_idle.png",
+      "frame": {
+        "x": 80,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 110
+      }
+    },
+    {
+      "filename": "female_jump.png",
+      "frame": {
+        "x": 160,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 110
+      }
+    },
+    {
+      "filename": "female_walk1.png",
+      "frame": {
+        "x": 240,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 110
+      }
+    },
+    {
+      "filename": "female_walk2.png",
+      "frame": {
+        "x": 320,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 110
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 110
+      }
+    }
+  ],
+  "meta": {
+    "app": "https://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "player.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 400,
+      "h": 110
+    },
+    "scale": "1",
+    "smartupdate": "$TexturePacker:SmartUpdate:fcfbafa3a41c133f3798fc2f580516e6:754aa4fd8a9cfdb73c897c42aa69cbd9:86d5339b780aedd87b35e2b7c0a7e11b$"
+  }
+}
