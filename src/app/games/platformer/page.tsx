@@ -46,7 +46,7 @@ export default function PlatformerPage() {
             Tu as collecté tous nos moments spéciaux ! 🌟
           </p>
           <Link
-            href="/games/trivia"
+            href="/games/word-scramble"
             className="inline-block px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-lg font-semibold 
               shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200
               hover:from-purple-600 hover:to-pink-600 active:scale-95"
