@@ -122,10 +122,18 @@ export class MainScene extends Scene {
       }
 
       // Add collision between player and tilemap layer with debug callback
-      this.physics.add.collider(this.player, this.groundLayer, (obj1, obj2) => {
+      this.physics.add.collider(this.player, this.groundLayer, (obj1) => {
         const player = obj1 as Physics.Arcade.Sprite;
         if (player.body) {
           const touchingDown = player.body.touching.down;
+          if (touchingDown) {
+            this.isJumping = false;
+            this.canJump = true;
+            // Only play idle animation if not moving horizontally
+            if (Math.abs(player.body.velocity.x) < 10) {
+              this.player.anims.play("idle", true);
+            }
+          }
           console.log("Collision detected - touching down:", touchingDown);
         }
       });
@@ -252,9 +260,13 @@ export class MainScene extends Scene {
     const isOnGround =
       this.player.body.blocked.down || this.player.body.touching.down;
 
-    // Reset jump timer when landing
+    // Reset jump states when landing
     if (isOnGround) {
       this.jumpTimer = 0;
+      this.canJump = true;
+      this.isJumping = false;
+      // Decrement jump cooldown
+      if (this.jumpCooldown > 0) this.jumpCooldown--;
     }
 
     // Handle jumping with variable height
@@ -263,17 +275,11 @@ export class MainScene extends Scene {
       Phaser.Input.Keyboard.JustDown(this.spaceKey);
     const jumpButtonHeld = this.cursors.up.isDown || this.spaceKey.isDown;
 
-    if (
-      jumpButtonPressed &&
-      isOnGround &&
-      this.canJump &&
-      this.jumpCooldown <= 0
-    ) {
+    if (jumpButtonPressed && isOnGround && this.canJump) {
       this.player.setVelocityY(this.JUMP_VELOCITY);
       this.player.anims.play("jump", true);
       this.isJumping = true;
       this.canJump = false;
-      this.jumpCooldown = 8; // Reduced cooldown for more responsive jumps
       this.jumpTimer = 0;
     } else if (
       jumpButtonHeld &&
@@ -282,7 +288,7 @@ export class MainScene extends Scene {
     ) {
       // Apply stronger additional upward force while jump is held
       this.jumpTimer += this.game.loop.delta;
-      this.player.setVelocityY(this.JUMP_VELOCITY * 0.7); // Increased multiplier for higher jumps
+      this.player.setVelocityY(this.JUMP_VELOCITY * 0.7);
     }
 
     // Handle movement
@@ -314,6 +320,20 @@ export class MainScene extends Scene {
       } else if (this.cursors.right.isDown) {
         this.player.setVelocityX(moveSpeed * airControlFactor);
       }
+    }
+
+    // Update the movement animation logic
+    if (this.cursors.left.isDown || this.cursors.right.isDown) {
+      if (isOnGround && !this.isJumping) {
+        this.player.anims.play("walk", true);
+      }
+    } else if (isOnGround && !this.isJumping) {
+      this.player.anims.play("idle", true);
+    }
+
+    // Keep the jump animation while in air
+    if (!isOnGround) {
+      this.player.anims.play("jump", true);
     }
   }
 
