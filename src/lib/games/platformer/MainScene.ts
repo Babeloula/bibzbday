@@ -17,9 +17,9 @@ export class MainScene extends Scene {
   private grassLayer!: Phaser.Tilemaps.TilemapLayer;
   private itemsLayer!: Phaser.Tilemaps.TilemapLayer;
   private exitLayer!: Phaser.Tilemaps.TilemapLayer;
-  private readonly GRAVITY = 800;
-  private readonly JUMP_VELOCITY = -1000;
-  private readonly JUMP_HOLD_DURATION = 200;
+  private readonly GRAVITY = 1200;
+  private readonly JUMP_VELOCITY = -800;
+  private readonly JUMP_HOLD_DURATION = 100;
   private jumpTimer: number = 0;
 
   constructor() {
@@ -189,13 +189,14 @@ export class MainScene extends Scene {
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setDeadzone(100, 100);
 
-    // Set world bounds based on map size
-    this.physics.world.setBounds(
-      0,
-      0,
-      this.map.widthInPixels,
-      this.map.heightInPixels
-    );
+    // Set bounds for both camera and world to match tilemap exactly
+    const mapHeight = this.map.heightInPixels;
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, mapHeight);
+    this.physics.world.setBounds(0, 0, this.map.widthInPixels, mapHeight);
+    this.physics.world.setBoundsCollision(true, true, true, true);
+
+    // Set the background color to match the sky
+    this.cameras.main.setBackgroundColor("#4B0082");
   }
 
   private createPlayerAnimations() {
