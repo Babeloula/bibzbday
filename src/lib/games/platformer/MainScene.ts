@@ -1,17 +1,9 @@
 import { Scene, GameObjects, Physics } from "phaser";
 
-interface MemoryItem {
-  sprite: GameObjects.Sprite;
-  memory: string;
-  type: "diamond" | "key";
-  color: string;
-}
-
 export class MainScene extends Scene {
   private player!: Physics.Arcade.Sprite;
-  private memoryItems!: MemoryItem[];
   private collectedCount: number = 0;
-  private totalMemories: number = 8;
+  private totalItems: number = 0;
   private onGameComplete?: () => void;
   private guideText?: GameObjects.Text;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -22,9 +14,12 @@ export class MainScene extends Scene {
   private map!: Phaser.Tilemaps.Tilemap;
   private tileset!: Phaser.Tilemaps.Tileset;
   private groundLayer!: Phaser.Tilemaps.TilemapLayer;
-  private readonly GRAVITY = 800; // Reduced gravity for floatier jumps
-  private readonly JUMP_VELOCITY = -1000; // Much stronger jump force
-  private readonly JUMP_HOLD_DURATION = 200; // Longer hold duration for higher jumps
+  private grassLayer!: Phaser.Tilemaps.TilemapLayer;
+  private itemsLayer!: Phaser.Tilemaps.TilemapLayer;
+  private exitLayer!: Phaser.Tilemaps.TilemapLayer;
+  private readonly GRAVITY = 800;
+  private readonly JUMP_VELOCITY = -1000;
+  private readonly JUMP_HOLD_DURATION = 200;
   private jumpTimer: number = 0;
 
   constructor() {
@@ -45,11 +40,6 @@ export class MainScene extends Scene {
       "player",
       "/assets/games/platformer/player.png",
       "/assets/games/platformer/player.json"
-    );
-    this.load.atlas(
-      "items",
-      "/assets/games/platformer/items.png",
-      "/assets/games/platformer/items.json"
     );
   }
 
@@ -81,13 +71,14 @@ export class MainScene extends Scene {
     this.map = this.make.tilemap({ key: "map" });
     this.tileset = this.map.addTilesetImage("world", "tiles")!;
 
-    // Create ground layer
-    this.groundLayer = this.map.createLayer(
-      "Calque de Tuiles 1",
-      this.tileset,
-      0,
-      0
-    )!;
+    // Create layers
+    this.grassLayer = this.map.createLayer("Grass", this.tileset, 0, 0)!;
+    this.groundLayer = this.map.createLayer("Ground", this.tileset, 0, 0)!;
+    this.itemsLayer = this.map.createLayer("Items", this.tileset, 0, 0)!;
+    this.exitLayer = this.map.createLayer("Exit", this.tileset, 0, 0)!;
+
+    // Count total items
+    this.totalItems = this.countItems();
 
     // Set up tilemap collisions
     this.setupTilemapCollisions();
@@ -113,20 +104,8 @@ export class MainScene extends Scene {
       this.player.setDragX(1000);
       this.player.setDepth(1);
 
-      // Adjust physics body size and offset for better ground detection
-      if (this.player.body) {
-        this.player.body.setSize(30, 90);
-        this.player.body.setOffset(33, 38);
-      }
-
-      // Enable debug visualization in development
-      if (process.env.NODE_ENV === "development") {
-        this.physics.world.createDebugGraphic();
-        this.add
-          .grid(0, 0, this.map.widthInPixels, this.map.heightInPixels, 64, 64)
-          .setOrigin(0)
-          .setAlpha(0.3);
-      }
+      // Move the player sprite up by 32 pixels
+      this.player.y -= 32;
 
       // Add collision between player and tilemap layer with debug callback
       this.physics.add.collider(this.player, this.groundLayer, (obj1) => {
@@ -141,63 +120,51 @@ export class MainScene extends Scene {
               this.player.anims.play("idle", true);
             }
           }
-          console.log("Collision detected - touching down:", touchingDown);
         }
       });
 
       // Create player animations
       this.createPlayerAnimations();
 
-      // Common player settings
-      this.player.setBounce(0.1);
-      this.player.setCollideWorldBounds(true);
-      this.player.setDragX(1000);
-      this.player.setDepth(1);
-      this.player.setSize(40, 100); // Adjust collision box size
-
-      // Add collision between player and tilemap layer
-      this.physics.add.collider(this.player, this.groundLayer);
-    } catch (error) {
-      console.error("Error creating player:", error);
-    }
-
-    // Create memory items at fixed positions
-    const memoryPositions: Array<{
-      x: number;
-      y: number;
-      type: "diamond" | "key";
-      color: string;
-    }> = [
-      { x: 200, y: 200, type: "diamond", color: "blue" },
-      { x: 400, y: 300, type: "key", color: "yellow" },
-      { x: 600, y: 200, type: "diamond", color: "red" },
-      { x: 800, y: 300, type: "key", color: "green" },
-      { x: 1000, y: 200, type: "diamond", color: "yellow" },
-      { x: 1200, y: 300, type: "key", color: "blue" },
-      { x: 1400, y: 200, type: "diamond", color: "green" },
-      { x: 1500, y: 300, type: "key", color: "red" },
-    ];
-
-    this.memoryItems = this.createMemoryItems(memoryPositions);
-
-    // Add collision between memory items and ground layer
-    this.memoryItems.forEach((item) => {
-      this.physics.add.collider(item.sprite, this.groundLayer);
+      // Add overlap with items layer
       this.physics.add.overlap(
         this.player,
-        item.sprite,
-        () => this.collectMemory(item),
+        this.itemsLayer,
+        (object1, object2) => {
+          // object2 will be the tile since itemsLayer is a TilemapLayer
+          const tile = object2 as Phaser.Tilemaps.Tile;
+          if (tile.index !== -1) {
+            this.collectItem(tile);
+          }
+        },
         undefined,
         this
       );
-    });
+
+      // Add overlap with exit layer
+      this.physics.add.overlap(
+        this.player,
+        this.exitLayer,
+        (object1, object2) => {
+          // object2 will be the tile since exitLayer is a TilemapLayer
+          const tile = object2 as Phaser.Tilemaps.Tile;
+          if (tile.index !== -1) {
+            this.checkExit(tile);
+          }
+        },
+        undefined,
+        this
+      );
+    } catch (error) {
+      console.error("Error creating player:", error);
+    }
 
     // Add guide text
     const guideText = [
       "🎮 Comment Jouer :",
       "Utilise les flèches GAUCHE/DROITE pour te déplacer",
       "↑ ou ESPACE pour sauter",
-      "💎 Collecte les diamants et les clés magiques",
+      "💎 Collecte tous les objets magiques",
       "",
       "Appuie sur une touche pour commencer !",
     ].join("\n");
@@ -363,82 +330,102 @@ export class MainScene extends Scene {
     }
   }
 
-  private createMemoryItems(
-    positions: {
-      x: number;
-      y: number;
-      type: "diamond" | "key";
-      color: string;
-    }[]
-  ): MemoryItem[] {
-    const memories = [
-      "Un diamant bleu magique ! 💙",
-      "Une clé mystérieuse jaune ! 🗝️",
-      "Un diamant rouge étincelant ! ❤️",
-      "Une clé verte secrète ! 🔑",
-      "Un diamant jaune brillant ! 💛",
-      "Une clé bleue enchantée ! 🗝️",
-      "Un diamant vert précieux ! 💚",
-      "Une clé rouge puissante ! 💪",
-    ];
+  private setupTilemapCollisions() {
+    // Set collisions only for ground layer
+    this.groundLayer.setCollisionBetween(1, 94);
 
-    return positions.map((pos, index) => {
-      const sprite = this.physics.add.sprite(
-        pos.x,
-        pos.y,
-        "items",
-        `${pos.color}_${pos.type}.png`
-      );
-      sprite.setScale(1);
-      sprite.setBounceY(0.3);
-      sprite.setDepth(1);
-      return {
-        sprite,
-        memory: memories[index],
-        type: pos.type,
-        color: pos.color,
-      };
-    });
+    // Set world bounds based on map size
+    this.physics.world.setBounds(
+      0,
+      0,
+      this.map.widthInPixels,
+      this.map.heightInPixels
+    );
+    this.physics.world.setBoundsCollision(true, true, true, true);
   }
 
-  private collectMemory(item: MemoryItem) {
-    item.sprite.destroy();
-    this.collectedCount++;
-
-    // Show memory text
-    const text = this.add.text(800, 450, item.memory, {
-      fontSize: "40px",
-      color: "#fff",
-      backgroundColor: "#000",
-      padding: { x: 20, y: 10 },
+  private countItems(): number {
+    let count = 0;
+    this.itemsLayer.forEachTile((tile) => {
+      if (tile.index !== -1) count++;
     });
-    text.setOrigin(0.5);
-    text.setScrollFactor(0);
-    text.setDepth(100);
+    return count;
+  }
 
-    // Animate text
-    this.tweens.add({
-      targets: text,
-      y: 200,
-      alpha: 0,
-      duration: 2000,
-      ease: "Power2",
-      onComplete: () => text.destroy(),
-    });
+  private collectItem(tile: Phaser.Tilemaps.Tile) {
+    if (tile.index !== -1) {
+      // Remove the item
+      this.itemsLayer.removeTileAt(tile.x, tile.y);
+      this.collectedCount++;
 
-    if (this.collectedCount === this.totalMemories) {
+      // Show collection message
+      const text = this.add.text(800, 450, "Objet magique collecté ! ✨", {
+        fontSize: "40px",
+        color: "#fff",
+        backgroundColor: "#000",
+        padding: { x: 20, y: 10 },
+      });
+      text.setOrigin(0.5);
+      text.setScrollFactor(0);
+      text.setDepth(100);
+
+      // Animate text
+      this.tweens.add({
+        targets: text,
+        y: 200,
+        alpha: 0,
+        duration: 2000,
+        ease: "Power2",
+        onComplete: () => text.destroy(),
+      });
+    }
+  }
+
+  private checkExit(tile: Phaser.Tilemaps.Tile) {
+    if (tile.index !== -1 && this.collectedCount === this.totalItems) {
       this.gameComplete();
+    } else if (tile.index !== -1) {
+      // Show message that all items need to be collected
+      const text = this.add.text(
+        800,
+        450,
+        "Collecte tous les objets magiques d'abord ! 🎯",
+        {
+          fontSize: "40px",
+          color: "#fff",
+          backgroundColor: "#000",
+          padding: { x: 20, y: 10 },
+        }
+      );
+      text.setOrigin(0.5);
+      text.setScrollFactor(0);
+      text.setDepth(100);
+
+      // Animate text
+      this.tweens.add({
+        targets: text,
+        y: 200,
+        alpha: 0,
+        duration: 2000,
+        ease: "Power2",
+        onComplete: () => text.destroy(),
+      });
     }
   }
 
   private gameComplete() {
     // Show completion message
-    const text = this.add.text(800, 450, "Tous les trésors sont collectés !", {
-      fontSize: "40px",
-      color: "#fff",
-      backgroundColor: "#000",
-      padding: { x: 20, y: 10 },
-    });
+    const text = this.add.text(
+      800,
+      450,
+      "Bravo ! Tu as terminé le niveau ! 🎉",
+      {
+        fontSize: "40px",
+        color: "#fff",
+        backgroundColor: "#000",
+        padding: { x: 20, y: 10 },
+      }
+    );
     text.setOrigin(0.5);
     text.setScrollFactor(0);
     text.setDepth(100);
@@ -458,35 +445,5 @@ export class MainScene extends Scene {
         if (this.onGameComplete) this.onGameComplete();
       },
     });
-  }
-
-  private setupTilemapCollisions() {
-    // Set collisions for specific tile indexes
-    this.groundLayer.setCollisionBetween(1, 94);
-
-    // Enable collision debugging in development
-    if (process.env.NODE_ENV === "development") {
-      const debugGraphics = this.add.graphics().setAlpha(0.75);
-      this.groundLayer.renderDebug(debugGraphics, {
-        tileColor: null, // Color of non-colliding tiles
-        collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
-        faceColor: new Phaser.Display.Color(40, 39, 37, 255), // Color of colliding face edges
-      });
-    }
-
-    // Verify collision tiles
-    const collidingTiles = this.groundLayer.filterTiles(
-      (tile: Phaser.Tilemaps.Tile) => tile.collides
-    ).length;
-    console.log("Number of colliding tiles:", collidingTiles);
-
-    // Set world bounds based on map size
-    this.physics.world.setBounds(
-      0,
-      0,
-      this.map.widthInPixels,
-      this.map.heightInPixels
-    );
-    this.physics.world.setBoundsCollision(true, true, true, true);
   }
 }

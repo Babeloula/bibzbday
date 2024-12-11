@@ -15,7 +15,7 @@ export const gameConfig: Types.Core.GameConfig = {
     default: "arcade",
     arcade: {
       gravity: { y: 1500, x: 0 },
-      debug: process.env.NODE_ENV === "development",
+      debug: false,
     },
   },
   scene: MainScene,
