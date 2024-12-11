@@ -18,9 +18,9 @@ export default function PlatformerGame({ onComplete }: PlatformerGameProps) {
         callbacks: {
           postBoot: (game: Game) => {
             const scene = game.scene.getScene("MainScene");
-            scene.events.once("create", () => {
+            if (scene) {
               scene.data.set("onComplete", onComplete);
-            });
+            }
           },
         },
       };

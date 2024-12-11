@@ -27,6 +27,7 @@ export class MainScene extends Scene {
   }
 
   init(data: { onComplete?: () => void }) {
+    console.log("Init called with data:", data); // Debug log
     this.onGameComplete = data.onComplete;
     this.collectedCount = 0;
   }
@@ -46,6 +47,7 @@ export class MainScene extends Scene {
   create() {
     // Get onComplete callback from scene data
     this.onGameComplete = this.data.get("onComplete");
+    console.log("Create method - callback retrieved:", !!this.onGameComplete); // Debug log
 
     // Initialize cursor keys and space key
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -434,7 +436,17 @@ export class MainScene extends Scene {
     // Play cheer animation
     this.player.anims.play("cheer", true);
 
-    // Animate text and call completion callback
+    console.log("Game complete! Calling callback..."); // Debug log
+
+    // Call the callback immediately and start the animation
+    if (this.onGameComplete) {
+      console.log("Callback exists, calling it..."); // Debug log
+      this.onGameComplete();
+    } else {
+      console.log("No callback found!"); // Debug log
+    }
+
+    // Animate text
     this.tweens.add({
       targets: text,
       y: 200,
@@ -443,7 +455,6 @@ export class MainScene extends Scene {
       ease: "Power2",
       onComplete: () => {
         text.destroy();
-        if (this.onGameComplete) this.onGameComplete();
       },
     });
   }
