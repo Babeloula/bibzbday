@@ -10,6 +10,16 @@ export const gameConfig: Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 1920,
     height: 960,
+    min: {
+      width: 320,
+      height: 160,
+    },
+    max: {
+      width: 1920,
+      height: 960,
+    },
+    zoom: 1,
+    autoRound: true,
   },
   physics: {
     default: "arcade",

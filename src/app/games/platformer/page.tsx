@@ -80,7 +80,7 @@ export default function PlatformerPage() {
 
       <div
         id="game-container"
-        className="w-auto h-[920px] bg-gradient-to-b from-indigo-900 to-purple-900 rounded-2xl overflow-hidden shadow-2xl border border-purple-300/20"
+        className="w-full aspect-[2/1] max-w-[1920px] max-h-[960px] min-h-[160px] bg-gradient-to-b from-indigo-900 to-purple-900 rounded-2xl overflow-hidden shadow-2xl border border-purple-300/20"
       >
         <PlatformerGame onComplete={() => setIsComplete(true)} />
       </div>
