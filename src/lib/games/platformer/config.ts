@@ -20,12 +20,19 @@ export const gameConfig: Types.Core.GameConfig = {
     },
     zoom: 1,
     autoRound: true,
+    expandParent: false,
   },
   physics: {
     default: "arcade",
     arcade: {
       gravity: { y: 1500, x: 0 },
       debug: false,
+    },
+  },
+  input: {
+    mouse: {
+      preventDefaultWheel: false,
+      preventDefaultDown: false,
     },
   },
   scene: MainScene,
