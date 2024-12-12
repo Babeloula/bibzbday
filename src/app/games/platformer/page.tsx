@@ -27,6 +27,55 @@ export default function PlatformerPage() {
         <p className="text-lg text-purple-600 max-w-md mx-auto mb-4">
           Saute et cours pour collecter nos précieux souvenirs !
         </p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-purple-600/90 backdrop-blur-md rounded-xl p-4 shadow-xl border border-white/30 w-full max-w-3xl mx-auto"
+        >
+          <h2 className="text-2xl font-bold text-white mb-3 text-center flex items-center justify-center gap-2">
+            <span className="text-2xl">🎮</span> Comment Jouer
+          </h2>
+          <div className="flex flex-col gap-3">
+            {/* Controls row */}
+            <div className="flex flex-wrap justify-center gap-3">
+              <div className="flex items-center gap-3">
+                <span className="bg-white text-purple-900 px-3 py-1.5 rounded-lg font-medium min-w-[80px] text-center">
+                  ←/→
+                </span>
+                <span className="text-white">Se déplacer</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="bg-white text-purple-900 px-3 py-1.5 rounded-lg font-medium min-w-[80px] text-center">
+                  ↑/ESPACE
+                </span>
+                <span className="text-white">Sauter</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="bg-white text-purple-900 px-3 py-1.5 rounded-lg font-medium min-w-[80px] text-center">
+                  ↑/↓
+                </span>
+                <span className="text-white">Grimper</span>
+              </div>
+            </div>
+            {/* Items row */}
+            <div className="flex flex-wrap justify-center gap-3">
+              <div className="flex items-center gap-3">
+                <span className="bg-white text-purple-900 px-3 py-1.5 rounded-lg font-medium min-w-[80px] text-center">
+                  💎
+                </span>
+                <span className="text-white">Objets magiques</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="bg-white text-purple-900 px-3 py-1.5 rounded-lg font-medium min-w-[80px] text-center">
+                  💝
+                </span>
+                <span className="text-white">Souvenirs d&apos;amour</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
 
       <div

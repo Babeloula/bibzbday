@@ -1,4 +1,4 @@
-import { Scene, GameObjects, Physics } from "phaser";
+import { Scene, Physics } from "phaser";
 
 export class MainScene extends Scene {
   private player!: Physics.Arcade.Sprite;
@@ -7,7 +7,6 @@ export class MainScene extends Scene {
   private heartItemsCount: number = 0;
   private collectedHeartItems: number = 0;
   private onGameComplete?: () => void;
-  private guideText?: GameObjects.Text;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private canJump: boolean = true;
@@ -107,34 +106,6 @@ export class MainScene extends Scene {
 
     // Create player at spawn position
     this.createPlayer(this.SPAWN_X, this.SPAWN_Y);
-
-    // Add guide text
-    const guideText = [
-      "🎮 Comment Jouer :",
-      "Utilise les flèches GAUCHE/DROITE pour te déplacer",
-      "↑ ou ESPACE pour sauter",
-      "↑/↓ sur une échelle pour grimper",
-      "💎 Collecte tous les objets magiques",
-      "💝 Trouve tous les souvenirs d'amour",
-      "",
-      "Appuie sur une touche pour commencer !",
-    ].join("\n");
-
-    this.guideText = this.add.text(800, 450, guideText, {
-      fontSize: "32px",
-      color: "#fff",
-      backgroundColor: "#000",
-      padding: { x: 20, y: 20 },
-      align: "center",
-    });
-    this.guideText.setOrigin(0.5);
-    this.guideText.setScrollFactor(0);
-    this.guideText.setDepth(100);
-
-    // Make guide disappear on any key press
-    this.input.keyboard?.once("keydown", () => {
-      this.guideText?.destroy();
-    });
 
     // Set up camera to follow player
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
