@@ -4,6 +4,8 @@ export class MainScene extends Scene {
   private player!: Physics.Arcade.Sprite;
   private collectedCount: number = 0;
   private totalItems: number = 0;
+  private heartItemsCount: number = 0;
+  private collectedHeartItems: number = 0;
   private onGameComplete?: () => void;
   private guideText?: GameObjects.Text;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -16,10 +18,17 @@ export class MainScene extends Scene {
   private groundLayer!: Phaser.Tilemaps.TilemapLayer;
   private grassLayer!: Phaser.Tilemaps.TilemapLayer;
   private itemsLayer!: Phaser.Tilemaps.TilemapLayer;
+  private heartItemsLayer!: Phaser.Tilemaps.TilemapLayer;
   private exitLayer!: Phaser.Tilemaps.TilemapLayer;
+  private laddersLayer!: Phaser.Tilemaps.TilemapLayer;
+  private trapsLayer!: Phaser.Tilemaps.TilemapLayer;
+  private isOnLadder: boolean = false;
   private readonly GRAVITY = 1200;
   private readonly JUMP_VELOCITY = -800;
   private readonly JUMP_HOLD_DURATION = 100;
+  private readonly CLIMB_SPEED = 200;
+  private readonly SPAWN_X = 200;
+  private readonly SPAWN_Y = 1600;
   private jumpTimer: number = 0;
 
   constructor() {
@@ -76,97 +85,37 @@ export class MainScene extends Scene {
     // Create layers
     this.grassLayer = this.map.createLayer("Grass", this.tileset, 0, 0)!;
     this.groundLayer = this.map.createLayer("Ground", this.tileset, 0, 0)!;
+    this.laddersLayer = this.map.createLayer("Ladders", this.tileset, 0, 0)!;
+    this.trapsLayer = this.map.createLayer("Traps", this.tileset, 0, 0)!;
     this.itemsLayer = this.map.createLayer("Items", this.tileset, 0, 0)!;
+    this.heartItemsLayer = this.map.createLayer(
+      "HeartItemsGroup",
+      this.tileset,
+      0,
+      0
+    )!;
     this.exitLayer = this.map.createLayer("Exit", this.tileset, 0, 0)!;
 
-    // Count total items
-    this.totalItems = this.countItems();
+    // Count total items and heart items
+    this.countAllItems();
 
     // Set up tilemap collisions
     this.setupTilemapCollisions();
 
-    // Create player at a fixed position
-    const playerX = 200;
-    const playerY = 300;
-
     // Configure physics world with custom gravity
     this.physics.world.gravity.y = this.GRAVITY;
 
-    try {
-      this.player = this.physics.add.sprite(
-        playerX,
-        playerY,
-        "player",
-        "character_femalePerson_idle.png"
-      );
-
-      // Set up player physics body
-      this.player.setBounce(0);
-      this.player.setCollideWorldBounds(true);
-      this.player.setDragX(1000);
-      this.player.setDepth(1);
-
-      // Move the player sprite up by 32 pixels
-      this.player.y -= 32;
-
-      // Add collision between player and tilemap layer with debug callback
-      this.physics.add.collider(this.player, this.groundLayer, (obj1) => {
-        const player = obj1 as Physics.Arcade.Sprite;
-        if (player.body) {
-          const touchingDown = player.body.touching.down;
-          if (touchingDown) {
-            this.isJumping = false;
-            this.canJump = true;
-            // Only play idle animation if not moving horizontally
-            if (Math.abs(player.body.velocity.x) < 10) {
-              this.player.anims.play("idle", true);
-            }
-          }
-        }
-      });
-
-      // Create player animations
-      this.createPlayerAnimations();
-
-      // Add overlap with items layer
-      this.physics.add.overlap(
-        this.player,
-        this.itemsLayer,
-        (object1, object2) => {
-          // object2 will be the tile since itemsLayer is a TilemapLayer
-          const tile = object2 as Phaser.Tilemaps.Tile;
-          if (tile.index !== -1) {
-            this.collectItem(tile);
-          }
-        },
-        undefined,
-        this
-      );
-
-      // Add overlap with exit layer
-      this.physics.add.overlap(
-        this.player,
-        this.exitLayer,
-        (object1, object2) => {
-          // object2 will be the tile since exitLayer is a TilemapLayer
-          const tile = object2 as Phaser.Tilemaps.Tile;
-          if (tile.index !== -1) {
-            this.checkExit(tile);
-          }
-        },
-        undefined,
-        this
-      );
-    } catch (error) {
-      console.error("Error creating player:", error);
-    }
+    // Create player at spawn position
+    this.createPlayer(this.SPAWN_X, this.SPAWN_Y);
 
     // Add guide text
     const guideText = [
       "🎮 Comment Jouer :",
       "Utilise les flèches GAUCHE/DROITE pour te déplacer",
       "↑ ou ESPACE pour sauter",
+      "↑/↓ sur une échelle pour grimper",
       "💎 Collecte tous les objets magiques",
+      "💝 Trouve tous les souvenirs d'amour",
       "",
       "Appuie sur une touche pour commencer !",
     ].join("\n");
@@ -253,68 +202,113 @@ export class MainScene extends Scene {
       frameRate: 6,
       repeat: -1,
     });
+
+    // Create climb animation
+    this.anims.create({
+      key: "climb",
+      frames: [
+        { key: "player", frame: "character_femalePerson_climb0.png" },
+        { key: "player", frame: "character_femalePerson_climb1.png" },
+      ],
+      frameRate: 8,
+      repeat: -1,
+    });
   }
 
   update() {
     if (!this.player?.body) return;
 
     const moveSpeed = 300;
+
+    // Check if player is on a ladder
+    const playerTileX = this.laddersLayer.worldToTileX(this.player.x);
+    const playerTileY = this.laddersLayer.worldToTileY(this.player.y);
+    const touchingLadder = this.laddersLayer.getTileAt(
+      playerTileX,
+      playerTileY
+    );
+
+    this.isOnLadder = touchingLadder !== null;
+
+    if (this.isOnLadder) {
+      // Disable gravity when on ladder
+      (this.player.body as Phaser.Physics.Arcade.Body).allowGravity = false;
+
+      // Handle climbing
+      if (this.cursors.up.isDown) {
+        this.player.setVelocityY(-this.CLIMB_SPEED);
+        this.player.anims.play("climb", true);
+      } else if (this.cursors.down.isDown) {
+        this.player.setVelocityY(this.CLIMB_SPEED);
+        this.player.anims.play("climb", true);
+      } else {
+        this.player.setVelocityY(0);
+        this.player.anims.stop();
+      }
+    } else {
+      // Re-enable gravity when not on ladder
+      (this.player.body as Phaser.Physics.Arcade.Body).allowGravity = true;
+    }
+
     const isOnGround =
       this.player.body.blocked.down || this.player.body.touching.down;
     const velocityY = this.player.body.velocity.y;
 
-    // Reset jump states when landing
-    if (isOnGround) {
-      this.jumpTimer = 0;
-      this.canJump = true;
-      this.isJumping = false;
-      // Decrement jump cooldown
-      if (this.jumpCooldown > 0) this.jumpCooldown--;
+    // Only allow jumping when not on ladder
+    if (!this.isOnLadder) {
+      // Reset jump states when landing
+      if (isOnGround) {
+        this.jumpTimer = 0;
+        this.canJump = true;
+        this.isJumping = false;
+        // Decrement jump cooldown
+        if (this.jumpCooldown > 0) this.jumpCooldown--;
+      }
+
+      // Handle jumping with variable height
+      const jumpButtonPressed =
+        Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
+        Phaser.Input.Keyboard.JustDown(this.spaceKey);
+      const jumpButtonHeld = this.cursors.up.isDown || this.spaceKey.isDown;
+
+      if (jumpButtonPressed && isOnGround && this.canJump) {
+        this.player.setVelocityY(this.JUMP_VELOCITY);
+        this.player.anims.play("jump", true);
+        this.isJumping = true;
+        this.canJump = false;
+        this.jumpTimer = 0;
+      } else if (
+        jumpButtonHeld &&
+        this.isJumping &&
+        this.jumpTimer < this.JUMP_HOLD_DURATION
+      ) {
+        this.jumpTimer += this.game.loop.delta;
+        this.player.setVelocityY(this.JUMP_VELOCITY * 0.7);
+      }
     }
 
-    // Handle jumping with variable height
-    const jumpButtonPressed =
-      Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
-      Phaser.Input.Keyboard.JustDown(this.spaceKey);
-    const jumpButtonHeld = this.cursors.up.isDown || this.spaceKey.isDown;
-
-    if (jumpButtonPressed && isOnGround && this.canJump) {
-      this.player.setVelocityY(this.JUMP_VELOCITY);
-      this.player.anims.play("jump", true);
-      this.isJumping = true;
-      this.canJump = false;
-      this.jumpTimer = 0;
-    } else if (
-      jumpButtonHeld &&
-      this.isJumping &&
-      this.jumpTimer < this.JUMP_HOLD_DURATION
-    ) {
-      this.jumpTimer += this.game.loop.delta;
-      this.player.setVelocityY(this.JUMP_VELOCITY * 0.7);
-    }
-
-    // Handle movement
+    // Handle horizontal movement
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-moveSpeed);
       this.player.setFlipX(true);
-      if (isOnGround) {
+      if (isOnGround && !this.isOnLadder) {
         this.player.anims.play("walk", true);
       }
     } else if (this.cursors.right.isDown) {
       this.player.setVelocityX(moveSpeed);
       this.player.setFlipX(false);
-      if (isOnGround) {
+      if (isOnGround && !this.isOnLadder) {
         this.player.anims.play("walk", true);
       }
     } else {
       this.player.setVelocityX(0);
-      if (isOnGround) {
+      if (isOnGround && !this.isOnLadder) {
         this.player.anims.play("idle", true);
       }
     }
 
-    // Add air control (reduced movement speed while in air)
-    if (!isOnGround) {
+    // Air control and animations only when not on ladder
+    if (!isOnGround && !this.isOnLadder) {
       const airControlFactor = 0.6;
       if (this.cursors.left.isDown) {
         this.player.setVelocityX(-moveSpeed * airControlFactor);
@@ -322,12 +316,9 @@ export class MainScene extends Scene {
         this.player.setVelocityX(moveSpeed * airControlFactor);
       }
 
-      // Handle jump and fall animations based on vertical velocity
       if (velocityY < 0) {
-        // Moving upward - show jump animation
         this.player.anims.play("jump", true);
       } else if (velocityY > 200) {
-        // Moving downward fast - show fall animation
         this.player.anims.play("fall", true);
       }
     }
@@ -347,12 +338,220 @@ export class MainScene extends Scene {
     this.physics.world.setBoundsCollision(true, true, true, true);
   }
 
-  private countItems(): number {
-    let count = 0;
+  private countAllItems(): void {
+    let itemCount = 0;
+    let heartItemCount = 0;
+
     this.itemsLayer.forEachTile((tile) => {
-      if (tile.index !== -1) count++;
+      if (tile.index !== -1) itemCount++;
     });
-    return count;
+
+    this.heartItemsLayer.forEachTile((tile) => {
+      if (tile.index !== -1) heartItemCount++;
+    });
+
+    this.totalItems = itemCount + heartItemCount;
+    this.heartItemsCount = heartItemCount;
+  }
+
+  private collectHeartItem(tile: Phaser.Tilemaps.Tile) {
+    if (tile.index !== -1) {
+      // Remove the heart item
+      this.heartItemsLayer.removeTileAt(tile.x, tile.y);
+      this.collectedCount++;
+      this.collectedHeartItems++;
+
+      // Show collection message
+      const text = this.add.text(800, 450, "Souvenir d'amour collecté ! 💝", {
+        fontSize: "40px",
+        color: "#fff",
+        backgroundColor: "#000",
+        padding: { x: 20, y: 10 },
+      });
+      text.setOrigin(0.5);
+      text.setScrollFactor(0);
+      text.setDepth(100);
+
+      // Animate text
+      this.tweens.add({
+        targets: text,
+        y: 200,
+        alpha: 0,
+        duration: 2000,
+        ease: "Power2",
+        onComplete: () => text.destroy(),
+      });
+
+      // Check if all heart items are collected
+      if (this.collectedHeartItems === this.heartItemsCount) {
+        this.showLoveMessage();
+      }
+    }
+  }
+
+  private showLoveMessage() {
+    const text = this.add.text(800, 450, "JE T'AIME BIBOUCHE ❤️", {
+      fontSize: "80px",
+      color: "#ff69b4", // Hot pink color
+      backgroundColor: "#000",
+      padding: { x: 40, y: 20 },
+      align: "center",
+    });
+    text.setOrigin(0.5);
+    text.setScrollFactor(0);
+    text.setDepth(100);
+
+    // Add a pulsing effect
+    this.tweens.add({
+      targets: text,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 1000,
+      yoyo: true,
+      repeat: 2,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        this.tweens.add({
+          targets: text,
+          y: 200,
+          alpha: 0,
+          duration: 3000,
+          ease: "Power2",
+          onComplete: () => text.destroy(),
+        });
+      },
+    });
+  }
+
+  private createPlayer(x: number, y: number): void {
+    try {
+      this.player = this.physics.add.sprite(
+        x,
+        y,
+        "player",
+        "character_femalePerson_idle.png"
+      );
+
+      this.setupPlayerPhysics();
+      this.createPlayerAnimations();
+      this.setupCollisions();
+    } catch (error) {
+      console.error("Error creating player:", error);
+    }
+  }
+
+  private setupPlayerPhysics(): void {
+    if (!this.player) return;
+
+    this.player.setBounce(0);
+    this.player.setCollideWorldBounds(true);
+    this.player.setDragX(1000);
+    this.player.setDepth(1);
+    this.player.y -= 32;
+  }
+
+  private setupCollisions(): void {
+    if (!this.player) return;
+
+    // Ground collision
+    this.physics.add.collider(
+      this.player,
+      this.groundLayer,
+      (
+        object1:
+          | Phaser.GameObjects.GameObject
+          | Phaser.Tilemaps.Tile
+          | Phaser.Physics.Arcade.Body
+      ) => {
+        if (!(object1 instanceof Phaser.Tilemaps.Tile)) {
+          this.handleGroundCollision(
+            object1 as Phaser.Types.Physics.Arcade.GameObjectWithBody
+          );
+        }
+      },
+      undefined,
+      this
+    );
+
+    // Overlaps
+    const layers: Array<
+      [Phaser.Tilemaps.TilemapLayer, (obj: Phaser.Tilemaps.Tile) => void]
+    > = [
+      [
+        this.trapsLayer,
+        (tile) =>
+          this.handleTrapCollision(
+            this.player,
+            tile as unknown as Phaser.GameObjects.GameObject
+          ),
+      ],
+      [this.itemsLayer, this.collectItem],
+      [this.heartItemsLayer, this.collectHeartItem],
+      [this.exitLayer, this.checkExit],
+    ];
+
+    layers.forEach(([layer, handler]) => {
+      this.physics.add.overlap(
+        this.player,
+        layer,
+        (_obj1, obj2) => {
+          const tile = obj2 as Phaser.Tilemaps.Tile;
+          if (tile.index !== -1) {
+            handler.call(this, tile);
+          }
+        },
+        undefined,
+        this
+      );
+    });
+  }
+
+  private handleGroundCollision(obj1: Phaser.GameObjects.GameObject): void {
+    const player = obj1 as Physics.Arcade.Sprite;
+    if (player.body) {
+      const touchingDown = player.body.touching.down;
+      if (touchingDown) {
+        this.isJumping = false;
+        this.canJump = true;
+        if (Math.abs(player.body.velocity.x) < 10) {
+          this.player.anims.play("idle", true);
+        }
+      }
+    }
+  }
+
+  private handleTrapCollision(
+    _player: Phaser.GameObjects.GameObject,
+    trap: Phaser.GameObjects.GameObject
+  ) {
+    const trapTile = trap as unknown as Phaser.Tilemaps.Tile;
+    if (trapTile.index !== -1) {
+      // Show death message
+      const text = this.add.text(800, 450, "Aïe ! Attention aux pièges ! 💀", {
+        fontSize: "40px",
+        color: "#fff",
+        backgroundColor: "#000",
+        padding: { x: 20, y: 10 },
+      });
+      text.setOrigin(0.5);
+      text.setScrollFactor(0);
+      text.setDepth(100);
+
+      // Animate text
+      this.tweens.add({
+        targets: text,
+        y: 200,
+        alpha: 0,
+        duration: 2000,
+        ease: "Power2",
+        onComplete: () => text.destroy(),
+      });
+
+      // Respawn player at initial position
+      this.player.setPosition(this.SPAWN_X, this.SPAWN_Y - 32);
+      this.player.setVelocity(0, 0);
+      this.player.anims.play("idle", true);
+    }
   }
 
   private collectItem(tile: Phaser.Tilemaps.Tile) {
