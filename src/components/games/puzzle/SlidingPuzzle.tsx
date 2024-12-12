@@ -223,17 +223,17 @@ export default function SlidingPuzzle({
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <button
-          onClick={() => setShowHint(!showHint)}
-          className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors"
-        >
-          {showHint ? "Cacher l&apos;indice" : "Montrer l&apos;indice"} 💡
-        </button>
+      <div className="flex flex-col gap-4 items-center">
         <div className="text-indigo-600 text-sm">
           Utilise les flèches du clavier ou clique sur les tuiles pour les
           déplacer
         </div>
+        <button
+          onClick={() => setShowHint(!showHint)}
+          className="w-1/2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors"
+        >
+          {showHint ? "Cacher l'indice" : "Montrer l'indice"} 💡
+        </button>
       </div>
     </div>
   );
