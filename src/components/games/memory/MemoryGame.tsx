@@ -23,27 +23,27 @@ interface MemoryGameProps {
 const MEMORY_ITEMS: MemoryItem[] = [
   {
     content: "/assets/games/memory/memory1.jpg",
-    memory: "Notre premier rendez-vous au théâtre",
+    memory: "She said yes !",
   },
   {
     content: "/assets/games/memory/memory2.jpg",
-    memory: "La fleur que tu m'as offerte",
+    memory: "Petit chien est arrivé 🐶",
   },
   {
     content: "/assets/games/memory/memory3.jpg",
-    memory: "Cette soirée magique à la fête foraine",
+    memory: "RFISSA PARTY!",
   },
   {
     content: "/assets/games/memory/memory4.jpg",
-    memory: "Notre soirée à regarder les étoiles sur la plage",
+    memory: "Bon temps dans le 13ème",
   },
   {
     content: "/assets/games/memory/memory5.jpg",
-    memory: "Ton magnifique concert",
+    memory: "On part à l'aventure, tu viens ?",
   },
   {
     content: "/assets/games/memory/memory6.jpg",
-    memory: "Notre cours de peinture ensemble",
+    memory: "Mon oeuvre d'art à moi",
   },
 ];
 
@@ -128,8 +128,8 @@ export default function MemoryGame({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+    <div className="w-full max-w-5xl mx-auto p-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {cards.map((card, index) => (
           <motion.div
             key={index}
@@ -147,22 +147,22 @@ export default function MemoryGame({
               }`}
             >
               {/* Front of card */}
-              <div className="absolute w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl flex items-center justify-center text-6xl shadow-lg backface-hidden">
+              <div className="absolute w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl text-white flex items-center justify-center text-7xl shadow-lg backface-hidden">
                 ?
               </div>
               {/* Back of card */}
-              <div className="absolute w-full h-full bg-white rounded-xl flex flex-col items-center justify-center p-2 shadow-lg backface-hidden rotate-y-180">
-                <div className="relative w-full h-[85%] rounded-lg overflow-hidden">
+              <div className="absolute w-full h-full bg-white rounded-xl flex flex-col items-center justify-center p-3 shadow-lg backface-hidden rotate-y-180">
+                <div className="relative w-full h-[88%] rounded-lg overflow-hidden">
                   <Image
                     src={card.memoryItem.content}
                     alt="Memory card"
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 33vw, 25vw"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     priority={index < 4}
                   />
                 </div>
-                <p className="text-xs md:text-sm text-center text-purple-600 font-medium mt-1 line-clamp-2">
+                <p className="text-xs md:text-sm text-center text-purple-600 font-medium mt-2 line-clamp-2">
                   {card.memoryItem.memory}
                 </p>
               </div>
