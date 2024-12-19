@@ -53,14 +53,14 @@ const QUESTIONS: Question[] = [
     ],
     correctIndex: 0,
     message: "Cette nuit magique sous les étoiles ! ✨",
-    image: "/assets/games/trivia/trivia1.jpg",
+    image: "/assets/games/trivia/trivia4.jpg",
   },
   {
     question: "Qu'avons-nous cuisiné ensemble la première fois ?",
     options: ["Une pizza", "Des pâtes", "Des sushis", "Des tacos"],
     correctIndex: 1,
     message: "Ces délicieuses pâtes faites maison ! 🍝",
-    image: "/assets/games/trivia/trivia1.jpg",
+    image: "/assets/games/trivia/trivia5.jpg",
   },
 ];
 
