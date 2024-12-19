@@ -132,8 +132,8 @@ export function PhotoMystery({
           <>
             <div className="absolute top-16 right-4 w-8 h-2 bg-indigo-800" />
             <div className="absolute top-16 right-4 w-8 h-2 bg-indigo-800 -scale-x-100" />
-            <div className="absolute top-24 right-4 w-8 h-2 bg-indigo-800 rotate-45" />
-            <div className="absolute top-24 right-4 w-8 h-2 bg-indigo-800 -rotate-45" />
+            <div className="absolute top-[6rem] right-4 w-8 h-2 bg-indigo-800 rotate-12 origin-right" />
+            <div className="absolute top-[6rem] right-4 w-8 h-2 bg-indigo-800 -rotate-12 origin-right" />
           </>
         )}
       </div>
@@ -161,8 +161,8 @@ export function PhotoMystery({
           <p className="text-indigo-600 mb-2">
             {isGameOver
               ? incorrectGuesses >= maxIncorrectGuesses
-                ? "Game Over! 😢"
-                : "Congratulations! 🎉"
+                ? "Perdu! 😢"
+                : "Gagné! 🎉"
               : `Remaining tries: ${maxIncorrectGuesses - incorrectGuesses}`}
           </p>
         </div>

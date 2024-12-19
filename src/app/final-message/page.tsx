@@ -56,7 +56,7 @@ export default function FinalMessagePage(): React.JSX.Element {
       .toLowerCase()
       .trim()
       .replace(/[^a-z\s]/g, "");
-    if (cleanAnswer === "red pepper" || cleanAnswer === "redpepper") {
+    if (cleanAnswer === "piment rouge" || cleanAnswer === "piment") {
       router.push("/final-message/key-location");
     } else {
       setIsError(true);
@@ -99,7 +99,7 @@ export default function FinalMessagePage(): React.JSX.Element {
                 transition={{ delay: 0.3, duration: 0.5 }}
                 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 mb-6"
               >
-                Un Dernier Défi ! 🎯
+                Un Dernier Défi !
               </motion.h1>
 
               <motion.div

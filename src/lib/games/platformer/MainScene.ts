@@ -30,6 +30,24 @@ export class MainScene extends Scene {
   private readonly SPAWN_Y = 1600;
   private jumpTimer: number = 0;
 
+  private readonly LOVE_MESSAGES = [
+    { text: "Tu es mon rayon de soleil", emoji: "❤️" },
+    { text: "Je t'aime plus que tout au monde", emoji: "❤️" },
+    { text: "Tu es la plus belle chose qui me soit arrivée", emoji: "❤️" },
+    { text: "Mon coeur t'appartient", emoji: "❤️" },
+    { text: "Tu illumines ma vie", emoji: "❤️" },
+    { text: "Tu es mon âme soeur", emoji: "❤️" },
+    { text: "Je t'aime ma femme", emoji: "❤️" },
+    { text: "Tu es ma Reine", emoji: "❤️" },
+    { text: "Mon amour pour toi grandit chaque jour", emoji: "❤️" },
+    { text: "Je t'aime ma Bibouche", emoji: "❤️" },
+    { text: "Tu es ma vie", emoji: "❤️" },
+    { text: "Mon coeur t'appartient", emoji: "❤️" },
+    { text: "Tu es mon bonheur quotidien", emoji: "❤️" },
+    { text: "Je t'aime plus que les mots peuvent le dire", emoji: "❤️" },
+    { text: "Kbida", emoji: "❤️" },
+  ];
+
   constructor() {
     super({ key: "MainScene" });
   }
@@ -331,33 +349,56 @@ export class MainScene extends Scene {
     container.setDepth(100);
     container.setScrollFactor(0);
 
+    // Create temporary text to measure width
+    const tempText = this.add.text(0, 0, text, {
+      fontSize: "24px",
+      fontFamily: "Arial, sans-serif",
+    });
+    const textWidth = tempText.width;
+    tempText.destroy();
+
+    // Calculate container width based on text width (with padding)
+    const containerWidth = Math.max(400, textWidth + 200);
+
     // Add background with border
-    const bg = this.add.rectangle(0, 0, 600, 90, 0x9333ea, 0.95);
+    const bg = this.add.rectangle(0, 0, containerWidth, 70, 0x9333ea, 0.95);
     bg.setStrokeStyle(4, 0xffffff, 0.5);
     bg.setOrigin(0.5);
     container.add(bg);
 
-    // Add a subtle inner glow effect using a slightly smaller rectangle
-    const innerGlow = this.add.rectangle(0, 0, 596, 86, 0xffffff, 0.1);
+    // Add a subtle inner glow effect
+    const innerGlow = this.add.rectangle(
+      0,
+      0,
+      containerWidth - 4,
+      66,
+      0xffffff,
+      0.1
+    );
     innerGlow.setOrigin(0.5);
     container.add(innerGlow);
 
-    // Add emoji with padding
-    const emojiText = this.add.text(-200, 0, emoji, {
-      fontSize: "45px",
+    // Position calculation
+    const emojiX = -containerWidth / 2 + 50; // Left side with padding
+    const textX = emojiX + 100; // Start text after emoji with some padding
+
+    // Add emoji
+    const emojiText = this.add.text(emojiX, 0, emoji, {
+      fontSize: "32px",
       padding: { x: 10, y: 5 },
     });
-    emojiText.setOrigin(0.5);
+    emojiText.setOrigin(0, 0.5);
     container.add(emojiText);
 
-    // Add message text with more space for emoji
-    const messageText = this.add.text(20, 0, text, {
-      fontSize: "28px",
+    // Add message text
+    const messageText = this.add.text(textX, 0, text, {
+      fontSize: "24px",
       color: "#FFFFFF",
-      fontFamily: "sans-serif",
+      fontFamily: "Arial, sans-serif",
       padding: { x: 10, y: 5 },
+      wordWrap: { width: containerWidth - 150 }, // Allow text wrapping if needed
     });
-    messageText.setOrigin(0.5);
+    messageText.setOrigin(0, 0.5);
     container.add(messageText);
 
     // Add scale animation
@@ -372,7 +413,7 @@ export class MainScene extends Scene {
     // Add fade out and up animation
     this.tweens.add({
       targets: container,
-      y: 200,
+      y: 350,
       alpha: 0,
       duration: 2000,
       ease: "Power2",
@@ -388,7 +429,7 @@ export class MainScene extends Scene {
       this.collectedCount++;
       this.collectedHeartItems++;
 
-      this.showMessage("Souvenir d'amour collecté !", "💝");
+      this.showMessage("LOVE U", "❤️");
 
       // Check if all heart items are collected
       if (this.collectedHeartItems === this.heartItemsCount) {
@@ -454,13 +495,20 @@ export class MainScene extends Scene {
     });
   }
 
+  private getRandomLoveMessage(): { message: string; emoji: string } {
+    const randomMessage =
+      this.LOVE_MESSAGES[Math.floor(Math.random() * this.LOVE_MESSAGES.length)];
+    return { message: randomMessage.text, emoji: randomMessage.emoji };
+  }
+
   private collectItem(tile: Phaser.Tilemaps.Tile) {
     if (tile.index !== -1) {
       // Remove the item
       this.itemsLayer.removeTileAt(tile.x, tile.y);
       this.collectedCount++;
 
-      this.showMessage("Objet magique collecté !", "✨");
+      const { message, emoji } = this.getRandomLoveMessage();
+      this.showMessage(message, emoji);
     }
   }
 
@@ -468,7 +516,7 @@ export class MainScene extends Scene {
     if (tile.index !== -1 && this.collectedCount === this.totalItems) {
       this.gameComplete();
     } else if (tile.index !== -1) {
-      this.showMessage("Collecte tous les objets magiques d'abord !", "🎯");
+      this.showMessage("Collecte tout le love d'abord !", "🎯");
     }
   }
 
