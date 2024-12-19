@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface MemoryItem {
   content: string;
@@ -20,12 +21,30 @@ interface MemoryGameProps {
 
 // Original memory items (just 6 items, we'll create pairs from these)
 const MEMORY_ITEMS: MemoryItem[] = [
-  { content: "🎭", memory: "Notre premier rendez-vous au théâtre" },
-  { content: "🌺", memory: "La fleur que tu m'as offerte" },
-  { content: "🎪", memory: "Cette soirée magique à la fête foraine" },
-  { content: "🌙", memory: "Notre soirée à regarder les étoiles sur la plage" },
-  { content: "🎸", memory: "Ton magnifique concert" },
-  { content: "🎨", memory: "Notre cours de peinture ensemble" },
+  {
+    content: "/assets/games/memory/memory1.jpg",
+    memory: "Notre premier rendez-vous au théâtre",
+  },
+  {
+    content: "/assets/games/memory/memory2.jpg",
+    memory: "La fleur que tu m'as offerte",
+  },
+  {
+    content: "/assets/games/memory/memory3.jpg",
+    memory: "Cette soirée magique à la fête foraine",
+  },
+  {
+    content: "/assets/games/memory/memory4.jpg",
+    memory: "Notre soirée à regarder les étoiles sur la plage",
+  },
+  {
+    content: "/assets/games/memory/memory5.jpg",
+    memory: "Ton magnifique concert",
+  },
+  {
+    content: "/assets/games/memory/memory6.jpg",
+    memory: "Notre cours de peinture ensemble",
+  },
 ];
 
 export default function MemoryGame({
@@ -110,7 +129,7 @@ export default function MemoryGame({
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
         {cards.map((card, index) => (
           <motion.div
             key={index}
@@ -132,9 +151,18 @@ export default function MemoryGame({
                 ?
               </div>
               {/* Back of card */}
-              <div className="absolute w-full h-full bg-white rounded-xl flex flex-col items-center justify-center p-4 shadow-lg backface-hidden rotate-y-180">
-                <span className="text-6xl mb-4">{card.memoryItem.content}</span>
-                <p className="text-lg text-center text-purple-600 font-medium">
+              <div className="absolute w-full h-full bg-white rounded-xl flex flex-col items-center justify-center p-2 shadow-lg backface-hidden rotate-y-180">
+                <div className="relative w-full h-[85%] rounded-lg overflow-hidden">
+                  <Image
+                    src={card.memoryItem.content}
+                    alt="Memory card"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 33vw, 25vw"
+                    priority={index < 4}
+                  />
+                </div>
+                <p className="text-xs md:text-sm text-center text-purple-600 font-medium mt-1 line-clamp-2">
                   {card.memoryItem.memory}
                 </p>
               </div>

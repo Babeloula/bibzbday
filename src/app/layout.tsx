@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Happy Birthday! 🎂",
-  description: "A special birthday adventure just for you!",
+  title: "HB Bibouche ! ❤️",
+  description: "Un petit jeu d&apos;anniversaire juste pour toi!",
 };
 
 export default function RootLayout({

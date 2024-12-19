@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 interface Question {
   question: string;
   options: string[];
   correctIndex: number;
   message: string;
+  image: string;
 }
 
 interface TriviaGameProps {
@@ -25,18 +27,21 @@ const QUESTIONS: Question[] = [
     ],
     correctIndex: 0,
     message: "Perfect - Notre chanson parfaite ! 💃",
+    image: "/assets/games/trivia/trivia1.jpg",
   },
   {
     question: "Où était notre premier rendez-vous ?",
     options: ["Au café", "Au théâtre", "Au restaurant", "Au parc"],
     correctIndex: 1,
     message: "Cette magnifique pièce qu'on a vue ensemble ! 🎭",
+    image: "/assets/games/trivia/trivia2.jpg",
   },
   {
     question: "Quel a été mon premier cadeau pour toi ?",
     options: ["Un livre", "Un collier", "Une fleur", "Une boîte de chocolats"],
     correctIndex: 2,
     message: "Une belle fleur que tu as gardée pendant des semaines ! 🌺",
+    image: "/assets/games/trivia/trivia3.jpg",
   },
   {
     question: "Où était notre premier baiser ?",
@@ -48,12 +53,14 @@ const QUESTIONS: Question[] = [
     ],
     correctIndex: 0,
     message: "Cette nuit magique sous les étoiles ! ✨",
+    image: "/assets/games/trivia/trivia1.jpg",
   },
   {
     question: "Qu'avons-nous cuisiné ensemble la première fois ?",
     options: ["Une pizza", "Des pâtes", "Des sushis", "Des tacos"],
     correctIndex: 1,
     message: "Ces délicieuses pâtes faites maison ! 🍝",
+    image: "/assets/games/trivia/trivia1.jpg",
   },
 ];
 
@@ -116,6 +123,31 @@ export default function TriviaGame({
             {question.question}
           </h2>
 
+          <div className="w-[300px] h-[300px] relative rounded-lg overflow-hidden flex items-center justify-center mx-auto">
+            <Image
+              src={question.image}
+              alt="Question illustration"
+              layout="fill"
+              objectFit="cover"
+            />
+          </div>
+          {selectedAnswer !== null && (
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-4 rounded-xl text-center text-lg ${
+                  isCorrect
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {isCorrect ? "✨ Bravo ! " : "❌ Pas tout à fait. "}
+                {question.message}
+              </motion.div>
+            </>
+          )}
+
           <div className="grid gap-4">
             {question.options.map((option, index) => (
               <motion.button
@@ -141,21 +173,6 @@ export default function TriviaGame({
               </motion.button>
             ))}
           </div>
-
-          {selectedAnswer !== null && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`p-4 rounded-xl text-center text-lg ${
-                isCorrect
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {isCorrect ? "✨ Bravo ! " : "❌ Pas tout à fait. "}
-              {question.message}
-            </motion.div>
-          )}
         </motion.div>
       </AnimatePresence>
     </div>

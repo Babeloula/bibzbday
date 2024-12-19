@@ -27,7 +27,7 @@ export default function PlatformerPage() {
         </h1>
 
         <p className="text-lg text-purple-600 max-w-md mx-auto mb-4">
-          Saute et cours pour collecter nos précieux souvenirs !
+          Saute et cours pour collecter de l&apos;amour !
         </p>
 
         <InstructionsButton />
@@ -47,7 +47,7 @@ export default function PlatformerPage() {
           className="text-center mt-8"
         >
           <p className="text-xl text-purple-700 mb-4">
-            Tu as collecté tous nos moments spéciaux ! 🌟
+            Tu as collecté plein d&apos;amour ❤️ Bravo !
           </p>
           <Link
             href="/games/word-scramble"
@@ -55,7 +55,7 @@ export default function PlatformerPage() {
               shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200
               hover:from-purple-600 hover:to-pink-600 active:scale-95"
           >
-            Continuer vers le Prochain Défi →
+            Continue vers le Prochain Défi →
           </Link>
         </motion.div>
       )}

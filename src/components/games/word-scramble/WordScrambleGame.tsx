@@ -20,9 +20,14 @@ const WORDS: ScrambleWord[] = [
     message: "Mon amour pour toi durera toujours ! 💖",
   },
   {
-    word: "AMOUREUX",
-    hint: "Ce que tu es pour moi",
-    message: "Tu es mon âme sœur ! 💫",
+    word: "HABIBA",
+    hint: "Kbida, Jlida, Kircha",
+    message: "Juny le chiiiiieeeeennn 🐶",
+  },
+  {
+    word: "AVENTURE",
+    hint: "Où je veux partir avec toi",
+    message: "Let's go for an adventuuuuuuurrrreee ! 🌟",
   },
   {
     word: "MAGNIFIQUE",
@@ -30,14 +35,9 @@ const WORDS: ScrambleWord[] = [
     message: "Ta beauté brille si fort ! ✨",
   },
   {
-    word: "DESTIN",
-    hint: "Ce qui nous a réunis",
-    message: "Nous étions destinés à être ensemble ! 🌟",
-  },
-  {
-    word: "PRECIEUX",
-    hint: "Ce que tu représentes pour moi",
-    message: "Tu es mon précieux trésor ! 💎",
+    word: "BIBOUCHE",
+    hint: "C'est toi!",
+    message: "Aaaaannww BIBOUCHE !",
   },
 ];
 

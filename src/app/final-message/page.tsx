@@ -51,10 +51,12 @@ export default function FinalMessagePage(): React.JSX.Element {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Convert answer to lowercase and remove spaces for comparison
-    const cleanAnswer = answer.toLowerCase().trim();
-    // La réponse en français
-    if (cleanAnswer === "ensemble") {
+    // Convert answer to lowercase, remove spaces and special characters
+    const cleanAnswer = answer
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z\s]/g, "");
+    if (cleanAnswer === "red pepper" || cleanAnswer === "redpepper") {
       router.push("/final-message/key-location");
     } else {
       setIsError(true);
@@ -107,21 +109,18 @@ export default function FinalMessagePage(): React.JSX.Element {
                 className="space-y-6 text-lg text-purple-700"
               >
                 <p className="text-xl font-medium">
-                  Résous cette énigme pour trouver la clé de ta boîte spéciale :
+                  Résous cette énigme pour trouver l&apos;emplacement de ta
+                  surprise :
                 </p>
                 <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-purple-100">
                   <p className="italic text-xl text-purple-800 leading-relaxed">
-                    &ldquo;Deux cœurs qui battent à l&apos;unisson,
+                    &ldquo;On me trouve dans des recettes épicées,
                     <br />
-                    À travers orages et beaux jours nous courrons.
+                    Je porte la couleur de la passion,
                     <br />
-                    Comme des pièces de puzzle parfaitement alignées,
+                    Mon nom fait penser à un groupe qui fait vibrer les scènes,
                     <br />
-                    Ce mot décrit ce que le destin a dessiné.
-                    <br />
-                    Pour toujours liés, dans la joie nous restons,
-                    <br />
-                    Sur le beau chemin de la vie nous marchons.&rdquo;
+                    Et sans moi, la harissa ne serait pas la même.&rdquo;
                   </p>
                 </div>
 

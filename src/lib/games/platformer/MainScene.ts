@@ -325,6 +325,62 @@ export class MainScene extends Scene {
     this.heartItemsCount = heartItemCount;
   }
 
+  private showMessage(text: string, emoji: string) {
+    // Create container
+    const container = this.add.container(800, 450);
+    container.setDepth(100);
+    container.setScrollFactor(0);
+
+    // Add background with border
+    const bg = this.add.rectangle(0, 0, 600, 90, 0x9333ea, 0.95);
+    bg.setStrokeStyle(4, 0xffffff, 0.5);
+    bg.setOrigin(0.5);
+    container.add(bg);
+
+    // Add a subtle inner glow effect using a slightly smaller rectangle
+    const innerGlow = this.add.rectangle(0, 0, 596, 86, 0xffffff, 0.1);
+    innerGlow.setOrigin(0.5);
+    container.add(innerGlow);
+
+    // Add emoji with padding
+    const emojiText = this.add.text(-200, 0, emoji, {
+      fontSize: "45px",
+      padding: { x: 10, y: 5 },
+    });
+    emojiText.setOrigin(0.5);
+    container.add(emojiText);
+
+    // Add message text with more space for emoji
+    const messageText = this.add.text(20, 0, text, {
+      fontSize: "28px",
+      color: "#FFFFFF",
+      fontFamily: "sans-serif",
+      padding: { x: 10, y: 5 },
+    });
+    messageText.setOrigin(0.5);
+    container.add(messageText);
+
+    // Add scale animation
+    this.tweens.add({
+      targets: container,
+      scaleX: [0.9, 1],
+      scaleY: [0.9, 1],
+      duration: 200,
+      ease: "Back.out",
+    });
+
+    // Add fade out and up animation
+    this.tweens.add({
+      targets: container,
+      y: 200,
+      alpha: 0,
+      duration: 2000,
+      ease: "Power2",
+      delay: 1500,
+      onComplete: () => container.destroy(),
+    });
+  }
+
   private collectHeartItem(tile: Phaser.Tilemaps.Tile) {
     if (tile.index !== -1) {
       // Remove the heart item
@@ -332,26 +388,7 @@ export class MainScene extends Scene {
       this.collectedCount++;
       this.collectedHeartItems++;
 
-      // Show collection message
-      const text = this.add.text(800, 450, "Souvenir d'amour collecté ! 💝", {
-        fontSize: "40px",
-        color: "#fff",
-        backgroundColor: "#000",
-        padding: { x: 20, y: 10 },
-      });
-      text.setOrigin(0.5);
-      text.setScrollFactor(0);
-      text.setDepth(100);
-
-      // Animate text
-      this.tweens.add({
-        targets: text,
-        y: 200,
-        alpha: 0,
-        duration: 2000,
-        ease: "Power2",
-        onComplete: () => text.destroy(),
-      });
+      this.showMessage("Souvenir d'amour collecté !", "💝");
 
       // Check if all heart items are collected
       if (this.collectedHeartItems === this.heartItemsCount) {
@@ -361,36 +398,141 @@ export class MainScene extends Scene {
   }
 
   private showLoveMessage() {
-    const text = this.add.text(800, 450, "JE T'AIME BIBOUCHE ❤️", {
-      fontSize: "80px",
-      color: "#ff69b4", // Hot pink color
-      backgroundColor: "#000",
-      padding: { x: 40, y: 20 },
-      align: "center",
-    });
-    text.setOrigin(0.5);
-    text.setScrollFactor(0);
-    text.setDepth(100);
+    const text = "JE T'AIME BIBOUCHE";
+    const container = this.add.container(800, 450);
+    container.setDepth(100);
+    container.setScrollFactor(0);
 
-    // Add a pulsing effect
+    // Add background with border
+    const bg = this.add.rectangle(0, 0, 800, 130, 0x9333ea, 0.95);
+    bg.setStrokeStyle(4, 0xffffff, 0.5);
+    bg.setOrigin(0.5);
+    container.add(bg);
+
+    // Add a subtle inner glow effect
+    const innerGlow = this.add.rectangle(0, 0, 796, 126, 0xffffff, 0.1);
+    innerGlow.setOrigin(0.5);
+    container.add(innerGlow);
+
+    // Add message text with padding
+    const messageText = this.add.text(0, 0, text, {
+      fontSize: "60px",
+      color: "#FFFFFF",
+      fontFamily: "sans-serif",
+      padding: { x: 10, y: 5 },
+    });
+    messageText.setOrigin(0.5);
+    container.add(messageText);
+
+    // Add heart emoji with padding
+    const heartText = this.add.text(messageText.width / 2 + 30, 0, "❤️", {
+      fontSize: "65px",
+      padding: { x: 10, y: 5 },
+    });
+    heartText.setOrigin(0, 0.5);
+    container.add(heartText);
+
+    // Add scale animation with pulsing effect
     this.tweens.add({
-      targets: text,
-      scaleX: 1.1,
-      scaleY: 1.1,
+      targets: container,
+      scaleX: [0.9, 1.1],
+      scaleY: [0.9, 1.1],
       duration: 1000,
       yoyo: true,
       repeat: 2,
       ease: "Sine.easeInOut",
       onComplete: () => {
         this.tweens.add({
-          targets: text,
+          targets: container,
           y: 200,
           alpha: 0,
           duration: 3000,
           ease: "Power2",
-          onComplete: () => text.destroy(),
+          onComplete: () => container.destroy(),
         });
       },
+    });
+  }
+
+  private collectItem(tile: Phaser.Tilemaps.Tile) {
+    if (tile.index !== -1) {
+      // Remove the item
+      this.itemsLayer.removeTileAt(tile.x, tile.y);
+      this.collectedCount++;
+
+      this.showMessage("Objet magique collecté !", "✨");
+    }
+  }
+
+  private checkExit(tile: Phaser.Tilemaps.Tile) {
+    if (tile.index !== -1 && this.collectedCount === this.totalItems) {
+      this.gameComplete();
+    } else if (tile.index !== -1) {
+      this.showMessage("Collecte tous les objets magiques d'abord !", "🎯");
+    }
+  }
+
+  private gameComplete() {
+    const container = this.add.container(800, 450);
+    container.setDepth(100);
+    container.setScrollFactor(0);
+
+    // Add background with border
+    const bg = this.add.rectangle(0, 0, 700, 110, 0x9333ea, 0.95);
+    bg.setStrokeStyle(4, 0xffffff, 0.5);
+    bg.setOrigin(0.5);
+    container.add(bg);
+
+    // Add a subtle inner glow effect
+    const innerGlow = this.add.rectangle(0, 0, 696, 106, 0xffffff, 0.1);
+    innerGlow.setOrigin(0.5);
+    container.add(innerGlow);
+
+    // Add message text with padding
+    const messageText = this.add.text(
+      0,
+      0,
+      "Bravo ! Tu as terminé le niveau !",
+      {
+        fontSize: "40px",
+        color: "#FFFFFF",
+        fontFamily: "sans-serif",
+        padding: { x: 10, y: 5 },
+      }
+    );
+    messageText.setOrigin(0.5);
+    container.add(messageText);
+
+    // Add celebration emoji with padding
+    const emojiText = this.add.text(messageText.width / 2 + 30, 0, "🎉", {
+      fontSize: "45px",
+      padding: { x: 10, y: 5 },
+    });
+    emojiText.setOrigin(0, 0.5);
+    container.add(emojiText);
+
+    // Play cheer animation
+    this.player.anims.play("cheer", true);
+
+    console.log("Game complete! Calling callback..."); // Debug log
+
+    // Call the callback immediately
+    if (this.onGameComplete) {
+      console.log("Callback exists, calling it..."); // Debug log
+      this.onGameComplete();
+    } else {
+      console.log("No callback found!"); // Debug log
+    }
+
+    // Add fade out and up animation
+    this.tweens.add({
+      targets: container,
+      y: 200,
+      alpha: 0,
+      duration: 2000,
+      ease: "Power2",
+      delay: 1500,
+      onComplete: () => container.destroy(),
     });
   }
 
@@ -497,135 +639,12 @@ export class MainScene extends Scene {
   ) {
     const trapTile = trap as unknown as Phaser.Tilemaps.Tile;
     if (trapTile.index !== -1) {
-      // Show death message
-      const text = this.add.text(800, 450, "Aïe ! Attention aux pièges ! 💀", {
-        fontSize: "40px",
-        color: "#fff",
-        backgroundColor: "#000",
-        padding: { x: 20, y: 10 },
-      });
-      text.setOrigin(0.5);
-      text.setScrollFactor(0);
-      text.setDepth(100);
-
-      // Animate text
-      this.tweens.add({
-        targets: text,
-        y: 200,
-        alpha: 0,
-        duration: 2000,
-        ease: "Power2",
-        onComplete: () => text.destroy(),
-      });
+      this.showMessage("Aïe ! Attention aux pièges !", "💀");
 
       // Respawn player at initial position
       this.player.setPosition(this.SPAWN_X, this.SPAWN_Y - 32);
       this.player.setVelocity(0, 0);
       this.player.anims.play("idle", true);
     }
-  }
-
-  private collectItem(tile: Phaser.Tilemaps.Tile) {
-    if (tile.index !== -1) {
-      // Remove the item
-      this.itemsLayer.removeTileAt(tile.x, tile.y);
-      this.collectedCount++;
-
-      // Show collection message
-      const text = this.add.text(800, 450, "Objet magique collecté ! ✨", {
-        fontSize: "40px",
-        color: "#fff",
-        backgroundColor: "#000",
-        padding: { x: 20, y: 10 },
-      });
-      text.setOrigin(0.5);
-      text.setScrollFactor(0);
-      text.setDepth(100);
-
-      // Animate text
-      this.tweens.add({
-        targets: text,
-        y: 200,
-        alpha: 0,
-        duration: 2000,
-        ease: "Power2",
-        onComplete: () => text.destroy(),
-      });
-    }
-  }
-
-  private checkExit(tile: Phaser.Tilemaps.Tile) {
-    if (tile.index !== -1 && this.collectedCount === this.totalItems) {
-      this.gameComplete();
-    } else if (tile.index !== -1) {
-      // Show message that all items need to be collected
-      const text = this.add.text(
-        800,
-        450,
-        "Collecte tous les objets magiques d'abord ! 🎯",
-        {
-          fontSize: "40px",
-          color: "#fff",
-          backgroundColor: "#000",
-          padding: { x: 20, y: 10 },
-        }
-      );
-      text.setOrigin(0.5);
-      text.setScrollFactor(0);
-      text.setDepth(100);
-
-      // Animate text
-      this.tweens.add({
-        targets: text,
-        y: 200,
-        alpha: 0,
-        duration: 2000,
-        ease: "Power2",
-        onComplete: () => text.destroy(),
-      });
-    }
-  }
-
-  private gameComplete() {
-    // Show completion message
-    const text = this.add.text(
-      800,
-      450,
-      "Bravo ! Tu as terminé le niveau ! 🎉",
-      {
-        fontSize: "40px",
-        color: "#fff",
-        backgroundColor: "#000",
-        padding: { x: 20, y: 10 },
-      }
-    );
-    text.setOrigin(0.5);
-    text.setScrollFactor(0);
-    text.setDepth(100);
-
-    // Play cheer animation
-    this.player.anims.play("cheer", true);
-
-    console.log("Game complete! Calling callback..."); // Debug log
-
-    // Call the callback immediately and start the animation
-    if (this.onGameComplete) {
-      console.log("Callback exists, calling it..."); // Debug log
-      this.onGameComplete();
-    } else {
-      console.log("No callback found!"); // Debug log
-    }
-
-    // Animate text
-    this.tweens.add({
-      targets: text,
-      y: 200,
-      alpha: 0,
-      duration: 2000,
-      ease: "Power2",
-      onComplete: () => {
-        text.destroy();
-      },
-    });
   }
 }

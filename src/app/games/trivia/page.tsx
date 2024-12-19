@@ -19,7 +19,7 @@ export default function TriviaPage(): React.JSX.Element {
           Quiz Spécial 💝
         </h1>
         <p className="text-lg text-rose-600 max-w-md mx-auto mb-8">
-          Réponds aux questions pour découvrir à quel point tu me connais bien !
+          Rappelle-toi et réponds juste !
         </p>
       </motion.div>
 
@@ -31,14 +31,12 @@ export default function TriviaPage(): React.JSX.Element {
           animate={{ opacity: 1 }}
           className="text-center mt-8"
         >
-          <p className="text-xl text-rose-700 mb-4">
-            Incroyable ! Tu me connais vraiment bien ! 🌟
-          </p>
+          <p className="text-xl text-rose-700 mb-4">Alleeeeezzz Bibouche !</p>
           <Link
             href="/games/platformer"
             className="inline-block px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
-            Continuer vers le Prochain Défi →
+            Continue vers le Prochain Défi →
           </Link>
         </motion.div>
       )}

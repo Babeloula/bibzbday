@@ -16,10 +16,10 @@ export default function MemoryGamePage(): React.JSX.Element {
         className="text-center space-y-4"
       >
         <h1 className="text-3xl md:text-4xl font-bold text-purple-800 mb-2">
-          Jeu de Mémoire 💭
+          Memory Game 💭
         </h1>
         <p className="text-lg text-purple-600 max-w-md mx-auto mb-8">
-          Trouve les paires pour découvrir nos souvenirs ensemble !
+          Trouve les paires pour découvrir tout plein de beaux souvenirs !
         </p>
       </motion.div>
 
@@ -32,13 +32,13 @@ export default function MemoryGamePage(): React.JSX.Element {
           className="text-center mt-8"
         >
           <p className="text-xl text-purple-700 mb-4">
-            Incroyable ! Tu as débloqué tous nos précieux souvenirs ! 🎉
+            Bravo Bibouche ! Tu as débloqué tous ces précieux souvenirs ! 🎉
           </p>
           <Link
             href="/games/trivia"
             className="inline-block px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
-            Continuer vers le Quiz →
+            Continue l&apos;aventure →
           </Link>
         </motion.div>
       )}
