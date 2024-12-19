@@ -104,10 +104,10 @@ export default function PuzzlePage(): React.JSX.Element {
         )}
         {isComplete && (
           <Link
-            href="/final-message"
+            href="/bravo"
             className="inline-block px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
-            Voir ta Surprise Finale →
+            Continuer →
           </Link>
         )}
       </motion.div>

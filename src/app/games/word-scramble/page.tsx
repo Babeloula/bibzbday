@@ -35,7 +35,7 @@ export default function WordScramblePage(): React.JSX.Element {
             Bravo ! Tu as déchiffré tous les mots ! 💝
           </p>
           <Link
-            href="/games/puzzle"
+            href="/games/photo-mystery"
             className="inline-block px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
             Continuer →

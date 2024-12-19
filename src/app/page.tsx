@@ -81,7 +81,7 @@ export default function LoginPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Entrer
+            Entrer →
           </motion.button>
         </motion.form>
       </motion.div>

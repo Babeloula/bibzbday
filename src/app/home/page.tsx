@@ -56,7 +56,7 @@ export default function HomePage() {
             href="/games/memory"
             className="inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
           >
-            C&apos;est par ici ✨
+            C&apos;est par ici →
           </Link>
         </motion.div>
       </motion.div>
